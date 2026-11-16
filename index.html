@@ -1,0 +1,1090 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kraft-Labor Klasse 8</title>
+<style>
+:root{
+  /* Layout: Kapitel-Leiste oben, darunter je Kapitel Versuchsfläche (Schneidematte) links und Forschungsprotokoll rechts */
+  color-scheme: light;
+  --paper:#f3f1ea; --panel:#ffffff; --ink:#1d2a2a; --muted:#5b6a69; --line:#d6d3c8;
+  --mat:#1f5d4c; --force:#e87a0c; --ok:#1f8a4c; --bad:#c23a2b; --blue:#2f6fd0;
+  --font-display:"Trebuchet MS","Segoe UI",system-ui,sans-serif;
+  --font-body:"Segoe UI",system-ui,-apple-system,"Helvetica Neue",Arial,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--paper);color:var(--ink);font-family:var(--font-body);font-size:17px;line-height:1.45}
+header{background:var(--mat);color:#fff;padding:14px 20px 0}
+header .top{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 18px;max-width:1240px;margin:0 auto}
+h1{font-family:var(--font-display);font-size:26px;margin:0;letter-spacing:.3px}
+header p{margin:0;opacity:.88;font-size:15px}
+#prog{margin-left:auto;font-variant-numeric:tabular-nums}
+nav{display:flex;gap:6px;max-width:1240px;margin:12px auto 0;overflow-x:auto}
+nav button{font:inherit;font-weight:600;font-size:15px;white-space:nowrap;border:0;border-radius:10px 10px 0 0;padding:9px 13px;background:rgba(255,255,255,.14);color:#fff;cursor:pointer}
+nav button[aria-selected="true"]{background:var(--paper);color:var(--ink)}
+nav button.done::after{content:" ✓";color:#b8f0cc}
+nav button.done[aria-selected="true"]::after{color:var(--ok)}
+button:focus-visible,select:focus-visible,input:focus-visible{outline:3px solid var(--force);outline-offset:2px}
+main{max-width:1240px;margin:0 auto;padding:18px 20px 48px}
+section[hidden],[hidden]{display:none !important}
+.intro{margin:0 0 14px}
+.intro .kap{font-size:14px;text-transform:uppercase;letter-spacing:.9px;color:var(--muted);font-weight:700}
+.intro h2{font-size:25px;margin:2px 0 4px}
+.intro p{max-width:70ch;margin:0;color:var(--muted)}
+.lab{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(290px,1fr);gap:18px;align-items:start}
+.lab.even{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+@media (max-width:880px){.lab,.lab.even{grid-template-columns:1fr}}
+.stack{display:grid;gap:14px}
+.narrow{max-width:780px}
+.stage{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:10px}
+canvas{display:block;width:100%;height:auto;border-radius:8px;touch-action:none}
+canvas.sim{aspect-ratio:8/5;background:var(--mat);cursor:crosshair}
+canvas.grid{aspect-ratio:8/5;background:#fff;cursor:crosshair;border:1px solid var(--line)}
+.controls{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:10px}
+.btn{font:inherit;font-weight:600;border:2px solid var(--mat);background:var(--mat);color:#fff;border-radius:9px;padding:8px 14px;cursor:pointer}
+.btn.ghost{background:#fff;color:var(--mat)}
+.btn:disabled{opacity:.4;cursor:default}
+.btn:active:not(:disabled){transform:translateY(1px)}
+.btn.on{background:var(--force);border-color:var(--force)}
+label.toggle{display:flex;gap:8px;align-items:center;font-size:15px;color:var(--muted)}
+label.toggle input{width:20px;height:20px;accent-color:var(--force)}
+.obs{margin:10px 2px 2px;min-height:1.5em;font-weight:600;color:var(--mat)}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px 18px}
+h2{font-family:var(--font-display);font-size:21px;margin:0 0 6px;text-wrap:balance}
+h3{font-size:14px;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);margin:0 0 8px}
+p{margin:0 0 10px}
+.q{border-left:6px solid var(--force)}
+.qq{font-weight:600;margin:0 0 8px}
+.opts{display:flex;flex-wrap:wrap;gap:8px}
+.opt{font:inherit;font-weight:600;border:2px solid var(--ink);background:#fff;color:var(--ink);border-radius:9px;padding:7px 13px;cursor:pointer}
+.opt:disabled{cursor:default;opacity:.55}
+.opt.right{background:var(--ok);border-color:var(--ok);color:#fff;opacity:1}
+.opt.wrong{background:var(--bad);border-color:var(--bad);color:#fff;opacity:1}
+.opt.sel{background:var(--ink);color:#fff;opacity:1}
+.fb{margin:8px 0 12px;font-weight:600;min-height:.2em}
+.fb.ok{color:var(--ok)} .fb.no{color:var(--bad)}
+.expl{background:#eaf6ee;border:1px solid var(--ok);border-radius:10px;padding:10px 12px;margin:6px 0 0}
+.dots{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+.dot{font:inherit;font-weight:700;font-size:14px;width:32px;height:32px;border-radius:50%;border:2px solid var(--line);background:#fff;color:var(--muted);cursor:pointer}
+.dot.ok{border-color:var(--ok);background:#eaf6ee;color:var(--ok)}
+.dot:disabled{opacity:.4;cursor:not-allowed}
+.lockhint{font-size:14px;color:var(--muted);flex-basis:100%}
+.dot.cur{border-color:var(--ink);color:var(--ink);box-shadow:0 0 0 3px rgba(29,42,42,.15)}
+.count{font-variant-numeric:tabular-nums;color:var(--muted);font-size:15px;margin-bottom:6px}
+.sit{font-size:20px;font-weight:600;margin:4px 0 12px;text-wrap:balance}
+.inl{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.inl input[type=text]{font:inherit;font-weight:600;width:110px;padding:7px 9px;border:2px solid var(--ink);border-radius:8px}
+.inl select, .merk select{font:inherit;font-weight:600;padding:6px 8px;border:2px solid var(--ink);border-radius:8px;background:#fff;color:var(--ink)}
+.merk{font-size:19px;line-height:2.2}
+.merk select.right{border-color:var(--ok);background:#eaf6ee}
+.merk select.wrong{border-color:var(--bad);background:#fbeae7}
+.know{border:2px solid var(--mat);background:#eef5f1}
+.know ul{margin:0;padding-left:20px} .know li{margin-bottom:4px}
+.final{border:3px solid var(--ok);background:#eaf6ee}
+.ab{--abc:#8a5a00;background:#fff6d8;border:2px solid #e2b23a;border-left:10px solid #e2b23a;border-radius:12px;padding:12px 16px;color:var(--ink)}
+.ab.stop{--abc:#9c2a17;background:#fbeae7;border-color:#d9705f}
+.ab-head{display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:6px;color:var(--abc);font-weight:800;text-transform:uppercase;letter-spacing:.8px;font-size:14px}
+.ab-ico{width:22px;height:22px;flex:none}
+.ab-where{font-weight:700;text-transform:none;letter-spacing:0;background:#fff;border:1px solid currentColor;border-radius:999px;padding:1px 10px;font-size:13px}
+.ab p{margin:0 0 6px} .ab p:last-child{margin-bottom:0}
+.ab ol{margin:4px 0 0;padding-left:22px} .ab li{margin-bottom:3px}
+.ab-quote{background:#fff;border:1px dashed #e2b23a;border-radius:8px;padding:8px 12px;margin:6px 0}
+.ab-done{display:flex;align-items:center;gap:8px;margin-top:8px;font-weight:600}
+.ab-done input{width:20px;height:20px;accent-color:var(--ok)}
+.intro .ab{margin-top:12px;max-width:780px}
+.intro .ab p{color:var(--ink)}
+nav .abtag{display:inline-block;margin-left:6px;font-size:11px;font-weight:800;letter-spacing:.5px;background:#ffd23f;color:#1d2a2a;border-radius:5px;padding:1px 5px;vertical-align:1px}
+.formula{font-family:var(--font-display);font-size:22px;font-weight:700;margin:6px 0}
+table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums}
+th,td{border:1px solid var(--line);padding:6px 9px;text-align:right}
+th:first-child,td:first-child{text-align:left}
+th{background:#f3f1ea;font-size:14px}
+.rangeRow{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.rangeRow input[type=range]{flex:1;min-width:140px;accent-color:var(--force)}
+.task + .task{border-top:1px solid var(--line);padding-top:12px;margin-top:4px}
+</style>
+</head>
+<body>
+<header>
+  <div class="top">
+    <h1>Kraft-Labor</h1>
+    <p>Was ist eine Kraft, woran erkennst du sie und wie rechnest du mit ihr?</p>
+    <p id="prog"></p>
+  </div>
+  <nav role="tablist" aria-label="Kapitel" id="nav"></nav>
+</header>
+
+<main>
+<!-- ================= KAPITEL 1 ================= -->
+<section id="k1">
+  <div class="intro"><div class="kap">Kapitel 1</div><h2>Kräfte mit Berührung</h2>
+    <p>Sechs Versuche mit Spielzeugautos. Stelle vor jedem Versuch eine Vermutung auf, beobachte genau und werte aus. Danach löst du zwei Knobelaufgaben.</p><div class="ab" id="ab-k1"><div class="ab-head"><svg class="ab-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3h10l4 4v14H5z" fill="#fff" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M15 3v4h4M8 11h8M8 15h8M8 19h5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg><span>Arbeitsblatt</span><span class="ab-where">Noch nichts eintragen</span></div><p>Leg dein Arbeitsblatt „Kräfte und ihre Wirkungen“ bereit. In Kapitel 1 und 2 schreibst du noch <strong>nichts</strong> auf. Beobachte genau, du brauchst deine Beobachtungen in Kapitel 3 für den Merksatz.</p></div></div>
+  <div class="lab">
+    <div class="stage">
+      <canvas class="sim" id="k1-cv" aria-label="Versuchsfläche mit Spielzeugautos"></canvas>
+      <div class="controls">
+        <button class="btn" id="k1-start">Versuch starten</button>
+        <button class="btn ghost" id="k1-again">Noch einmal ansehen</button>
+        <label class="toggle" id="k1-slowl"><input type="checkbox" id="k1-slow"> Zeitlupe</label>
+        <button class="btn k1-free" id="k1-roll" hidden>Auto losrollen lassen</button>
+        <button class="btn ghost k1-free" id="k1-rest" hidden>Auto hinstellen</button>
+      </div>
+      <p class="obs" id="k1-obs"></p>
+    </div>
+    <div class="stack">
+      <div class="card"><div class="dots" id="k1-steps"></div><h2 id="k1-title"></h2><p id="k1-text"></p></div>
+      <div class="card q" id="k1-q"></div>
+      <div class="controls"><button class="btn ghost" id="k1-prev">Zurück</button><button class="btn" id="k1-next">Nächster Versuch</button></div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= KAPITEL 2 ================= -->
+<section id="k2" hidden>
+  <div class="intro"><div class="kap">Kapitel 2</div><h2>Kräfte ohne Berührung</h2>
+    <p>Eine Eisenkugel, ein Stabmagnet und ein dünner Stahlstreifen. Gelingen dieselben Wirkungen wie bei den Autos, ohne dass sich etwas berührt?</p></div>
+  <div class="lab">
+    <div class="stage">
+      <canvas class="sim" id="k2-cv" aria-label="Versuchsfläche mit Eisenkugel, Magnet und Stahlstreifen"></canvas>
+      <div class="controls">
+        <button class="btn" id="k2-start">Versuch starten</button>
+        <button class="btn ghost" id="k2-again">Noch einmal ansehen</button>
+        <label class="toggle" id="k2-slowl"><input type="checkbox" id="k2-slow"> Zeitlupe</label>
+        <button class="btn k2-free" id="k2-roll" hidden>Kugel losrollen lassen</button>
+        <button class="btn ghost k2-free" id="k2-rest" hidden>Kugel hinlegen</button>
+      </div>
+      <p class="obs" id="k2-obs"></p>
+    </div>
+    <div class="stack">
+      <div class="card"><div class="dots" id="k2-steps"></div><h2 id="k2-title"></h2><p id="k2-text"></p></div>
+      <div class="card q" id="k2-q"></div>
+      <div class="controls"><button class="btn ghost" id="k2-prev">Zurück</button><button class="btn" id="k2-next">Nächster Versuch</button></div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= KAPITEL 3 ================= -->
+<section id="k3" hidden>
+  <div class="intro"><div class="kap">Kapitel 3</div><h2>Was ist eine Kraft?</h2>
+    <p>Du hast Kräfte nie gesehen, nur das, was sie bewirken. Jetzt wendest du das auf den Alltag an und formulierst den Merksatz.</p></div>
+  <div class="stack narrow">
+    <div class="card" id="k3-c1"><h2>Kraft-Detektiv</h2><p>Woran erkennst du in diesen Fällen, dass eine Kraft wirkt?</p><div id="k3-det"></div></div>
+    <div class="card" id="k3-c2" hidden><h2>Kraft oder nur ein Wort?</h2><p>In der Alltagssprache heißt vieles „Kraft“, was in der Physik keine ist. Entscheide.</p><div id="k3-wort"></div></div>
+    <div class="card" id="k3-c3" hidden><h2>Merksatz</h2><p>Wähle für jede Lücke das passende Wort.</p>
+      <p class="merk" id="k3-merk"></p>
+      <div class="controls"><button class="btn" id="k3-check">Prüfen</button></div><p class="fb" id="k3-fb"></p></div>
+<div class="ab" id="k3-final" hidden><div class="ab-head"><svg class="ab-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3h10l4 4v14H5z" fill="#fff" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M15 3v4h4M8 11h8M8 15h8M8 19h5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg><span>Arbeitsblatt</span><span class="ab-where">Seite 1 · Kasten „Definition der Kraft“</span></div><p>Schreibe den Merksatz vollständig und ordentlich in den Kasten <strong>„Definition der Kraft“</strong> ganz oben auf Seite 1:</p>
+      <div class="ab-quote"><p><strong>Auf einen Körper wirkt eine Kraft, wenn sich seine Geschwindigkeit ändert (schneller oder langsamer), wenn sich seine Bewegungsrichtung ändert oder wenn er sich verformt.</strong></p>
+      <p><strong>Die Kraft selbst ist nicht sichtbar. Man erkennt sie nur an ihrer Wirkung. Die Kraft F wird in Newton (N) angegeben.</strong></p></div>
+      <label class="ab-done"><input type="checkbox" id="k3-abdone"> Ich habe den Merksatz eingetragen.</label>
+      <div class="controls"><button class="btn" id="k3-go" disabled>Zum nächsten Kapitel: Kraftpfeile →</button></div></div>
+  </div>
+</section>
+
+<!-- ================= KAPITEL 4 ================= -->
+<section id="k4" hidden>
+  <div class="intro"><div class="kap">Kapitel 4</div><h2>Kraftpfeile</h2>
+    <p>Eine Kraft ist unsichtbar. Damit man trotzdem über sie sprechen und mit ihr rechnen kann, zeichnet man sie als Pfeil. Der Pfeil ist ein Modell.</p></div>
+  <div class="stack">
+    <div class="lab">
+      <div class="stage">
+        <canvas class="sim" id="k4-cv" aria-label="Auto mit einstellbarem Kraftpfeil"></canvas>
+        <div class="controls">
+          <button class="btn" id="k4-apply">Kraft 1 Sekunde wirken lassen</button>
+          <button class="btn ghost" id="k4-reset">Auto zurückstellen</button>
+        </div>
+        <p class="obs" id="k4-obs">Stelle rechts Betrag und Richtung ein. Der Pfeil zeigt die Kraft, die gleich wirken wird.</p>
+      </div>
+      <div class="stack">
+        <div class="card know"><h2>Ein Kraftpfeil sagt dir drei Dinge</h2>
+          <ul><li><strong>Angriffspunkt:</strong> Der Pfeil beginnt dort, wo die Kraft am Körper angreift.</li>
+          <li><strong>Richtung:</strong> Die Pfeilspitze zeigt, wohin die Kraft wirkt.</li>
+          <li><strong>Betrag:</strong> Je länger der Pfeil, desto größer die Kraft.</li></ul></div>
+        <div class="card"><h3>Pfeil einstellen</h3>
+          <div class="rangeRow"><label for="k4-n">Betrag</label><input type="range" id="k4-n" min="1" max="10" value="4"><strong id="k4-nv">4 N</strong></div>
+          <p style="margin:10px 0 6px">Richtung</p>
+          <div class="opts" id="k4-dir">
+            <button class="btn on" data-d="0">nach rechts</button><button class="btn ghost" data-d="2">nach links</button>
+            <button class="btn ghost" data-d="3">nach oben</button><button class="btn ghost" data-d="1">nach unten</button></div></div>
+        <div class="card q" id="k4-q"></div>
+        <div class="ab" id="k4-ab1" hidden><div class="ab-head"><svg class="ab-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3h10l4 4v14H5z" fill="#fff" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M15 3v4h4M8 11h8M8 15h8M8 19h5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg><span>Arbeitsblatt</span><span class="ab-where">Seite 1 · Kasten „Darstellung von Kräften“</span></div><p>Lies jetzt auf deinem Arbeitsblatt den Kasten <strong>„Darstellung von Kräften“</strong>.</p>
+          <ol><li>Unterstreiche die drei Angaben, die du gerade kennengelernt hast: <strong>Richtung</strong>, <strong>Betrag</strong> und <strong>Kraftangriffspunkt</strong>.</li>
+          <li>Die letzten beiden Punkte (Wirkungslinie, addierbar) brauchst du erst später. Lass sie noch offen.</li></ol>
+          <p>Dann geht es unten mit Übung 1 und 2 weiter.</p></div>
+      </div>
+    </div>
+    <div class="lab even">
+      <div class="card"><h2>Übung 1: Kraftpfeile ablesen</h2>
+        <p>Ein Kästchen ist 1 cm breit. Der <strong>Maßstab</strong> sagt, wie viel Newton 1 cm Pfeillänge bedeutet. Beispiel: Bei 1 cm ≙ 2 N steht ein 3 cm langer Pfeil für 6 N.</p>
+        <canvas class="grid" id="k4-g1" aria-label="Kästchenpapier mit Kraftpfeil"></canvas><div id="k4-read" style="margin-top:10px"></div></div>
+      <div class="card"><h2>Übung 2: Kraftpfeile zeichnen</h2>
+        <p>Zeichne den Pfeil: Tippe oder ziehe auf dem Kästchenpapier. Der Pfeil beginnt immer am schwarzen Angriffspunkt.</p>
+        <canvas class="grid" id="k4-g2" aria-label="Kästchenpapier zum Zeichnen eines Kraftpfeils"></canvas><div id="k4-draw" style="margin-top:10px"></div></div>
+    </div>
+    <div class="ab" id="k4-ab2" hidden><div class="ab-head"><svg class="ab-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3h10l4 4v14H5z" fill="#fff" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M15 3v4h4M8 11h8M8 15h8M8 19h5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg><span>Arbeitsblatt</span><span class="ab-where">Seite 1 · Aufgabe 1</span></div><p>Jetzt zeichnest du Kraftpfeile auf Papier. Bearbeite <strong>Aufgabe 1</strong> auf Seite 1 mit Lineal und Bleistift:</p>
+      <ol><li>Rechne zuerst die Länge aus: Kraft geteilt durch 3 N pro cm.</li>
+      <li>Setze einen Punkt als Angriffspunkt und zeichne den Pfeil in die angegebene Richtung.</li>
+      <li>Schreibe den Betrag (z. B. 6 N) an den Pfeil.</li></ol>
+      <label class="ab-done"><input type="checkbox" id="k4-abdone"> Ich habe Aufgabe 1 fertig.</label></div>
+    <div class="controls" id="k4-stop" hidden><button class="btn" id="k4-go">Zum nächsten Kapitel: Kräfte addieren →</button></div>
+  </div>
+</section>
+
+<!-- ================= KAPITEL 5 ================= -->
+<section id="k5" hidden>
+  <div class="intro"><div class="kap">Kapitel 5</div><h2>Kräfte addieren</h2>
+    <p>Oft wirken mehrere Kräfte gleichzeitig auf einen Körper. Zusammen wirken sie wie eine einzige Kraft, die Resultierende F<sub>Res</sub>.</p>
+    <div class="ab" id="ab-k5a"><div class="ab-head"><svg class="ab-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3h10l4 4v14H5z" fill="#fff" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M15 3v4h4M8 11h8M8 15h8M8 19h5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg><span>Arbeitsblatt</span><span class="ab-where">Seite 1 · Kasten „Darstellung von Kräften“</span></div><p>Jetzt verstehst du auch den letzten Punkt im Kasten: <strong>Kräfte sind addierbar.</strong> Unterstreiche dort „resultierende Kraft“.</p></div></div>
+  <div class="lab even">
+    <div class="card"><h2>Teil A: Rechnen</h2>
+      <p>Wirken die Kräfte entlang derselben Linie, darfst du rechnen: gleiche Richtung <strong>addieren</strong>, entgegengesetzte Richtung <strong>subtrahieren</strong>. Die Resultierende zeigt in die Richtung der stärkeren Seite.</p>
+      <canvas id="k5-cv" style="aspect-ratio:16/5;background:#fff;border:1px solid var(--line)" aria-label="Kiste mit Kraftpfeilen"></canvas>
+      <div id="k5-a" style="margin-top:10px"></div></div>
+    <div class="card"><h2>Teil B: Zeichnen</h2>
+      <p>Wirken die Kräfte in verschiedene Richtungen, zeichnest du ein <strong>Kräfteparallelogramm</strong>: Verschiebe in Gedanken F₁ an die Spitze von F₂ und F₂ an die Spitze von F₁. Die Diagonale vom Angriffspunkt aus ist F<sub>Res</sub>. Miss ihre Länge und rechne mit dem Maßstab in Newton um.</p>
+      <canvas class="grid" id="k5-g" aria-label="Kästchenpapier mit zwei Kraftpfeilen"></canvas>
+      <div id="k5-b" style="margin-top:10px"></div></div>
+  </div>
+  <div class="stack narrow" style="margin-top:14px">
+  <div class="card know" id="k5-know" hidden><h2>Kräftegleichgewicht</h2>
+    <p style="margin:0">Sind zwei Kräfte gleich groß und entgegengesetzt, heben sie sich auf: F<sub>Res</sub> = 0 N. Dann ändert sich nichts, ein ruhender Körper bleibt in Ruhe. Genau das muss bei einem Kran gelten, damit er nicht kippt.</p></div>
+  <div class="ab" id="k5-ab" hidden><div class="ab-head"><svg class="ab-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3h10l4 4v14H5z" fill="#fff" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M15 3v4h4M8 11h8M8 15h8M8 19h5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg><span>Arbeitsblatt</span><span class="ab-where">Seite 1 · Aufgabe 2</span></div><p>Bearbeite jetzt <strong>Aufgabe 2</strong> auf Seite 1:</p>
+      <ol><li><strong>a)</strong> Zeichne mit Lineal das Kräfteparallelogramm (Maßstab 1 cm ≙ 1 N). Miss F<sub>Res</sub> und rechne in Newton um.</li>
+      <li><strong>b)</strong> Berechne die drei Resultierenden. Gib immer Betrag <strong>und</strong> Richtung an.</li></ol>
+      <label class="ab-done"><input type="checkbox" id="k5-abdone"> Ich habe Aufgabe 2 fertig.</label></div>
+  <div class="ab stop" id="k5-stop" hidden><div class="ab-head"><svg class="ab-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3h10l4 4v14H5z" fill="#fff" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M15 3v4h4M8 11h8M8 15h8M8 19h5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg><span>Stopp</span><span class="ab-where">Seite 2</span></div><p>Hier endet die Simulation. Das <strong>Experiment zur Gewichtskraft</strong> auf Seite 2 macht ihr mit echten Federkraftmessern. Wartet auf das Signal eurer Lehrkraft.</p>
+      <p>Schon fertig und noch Zeit? Teste dich im Abschluss-Check.</p>
+      <div class="controls"><button class="btn" id="k5-go">Zum nächsten Kapitel: Abschluss-Check →</button></div></div>
+  </div>
+</section>
+
+<!-- ================= KAPITEL 6 ================= -->
+<section id="k6" hidden>
+  <div class="intro"><div class="kap">Kapitel 6 · für Schnelle</div><h2>Abschluss-Check</h2><p>Acht Fragen quer durch alle Kapitel. Wie viele schaffst du im ersten Versuch?</p><div class="ab" id="ab-k6"><div class="ab-head"><svg class="ab-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3h10l4 4v14H5z" fill="#fff" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M15 3v4h4M8 11h8M8 15h8M8 19h5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg><span>Arbeitsblatt</span><span class="ab-where">Erst nach Aufgabe 2</span></div><p>Bearbeite den Abschluss-Check erst, wenn auf Seite 1 des Arbeitsblatts alles fertig ist: Merksatz, Aufgabe 1 und Aufgabe 2.</p></div></div>
+  <div class="card narrow"><div id="k6-quiz"></div></div>
+</section>
+</main>
+
+<script>
+"use strict";
+/* ============================================================
+   Helfer
+   ============================================================ */
+const $ = id => document.getElementById(id);
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const W = 800, H = 500;
+const de = n => String(Math.round(n * 100) / 100).replace(".", ",");
+function parseNum(s){
+  s = String(s).trim().replace(/\s/g, "");
+  if (/^\d{1,3}(\.\d{3})+$/.test(s)) s = s.replace(/\./g, "");
+  s = s.replace(",", ".");
+  if (s === "" || isNaN(s)) return NaN;
+  return parseFloat(s);
+}
+if (!CanvasRenderingContext2D.prototype.roundRect){
+  CanvasRenderingContext2D.prototype.roundRect = function(x, y, w, h){ this.rect(x, y, w, h); };
+}
+function setup(c, w, h){
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  c.width = w * dpr; c.height = h * dpr;
+  const g = c.getContext("2d"); g.setTransform(dpr, 0, 0, dpr, 0, 0); return g;
+}
+function ppos(c, e, w, h){
+  const r = c.getBoundingClientRect();
+  return { x: (e.clientX - r.left) * w / r.width, y: (e.clientY - r.top) * h / r.height };
+}
+function angDiff(a, b){ let d = a - b; while (d > Math.PI) d -= 2 * Math.PI; while (d < -Math.PI) d += 2 * Math.PI; return d; }
+const sp = o => Math.hypot(o.vx, o.vy);
+const cms = v => Math.round(v / 10);
+let uid = 0;
+
+/* Multiple Choice */
+function mc(host, o){
+  const p = document.createElement("p"); p.className = "qq"; p.innerHTML = o.q;
+  const box = document.createElement("div"); box.className = "opts";
+  const fb = document.createElement("p"); fb.className = "fb";
+  let miss = false;
+  o.opts.forEach(([v, l]) => {
+    const b = document.createElement("button"); b.className = "opt"; b.textContent = l;
+    b.addEventListener("click", () => {
+      const all = box.querySelectorAll("button");
+      if (o.any){ all.forEach(x => x.disabled = true); b.classList.add("sel"); fb.className = "fb ok"; fb.innerHTML = o.ok || ""; if (o.onOk) o.onOk(v); return; }
+      if (v === o.a){ all.forEach(x => x.disabled = true); b.classList.add("right"); fb.className = "fb ok"; fb.innerHTML = o.ok || "Richtig."; if (o.onOk) o.onOk(!miss); }
+      else { b.classList.add("wrong"); b.disabled = true; miss = true; fb.className = "fb no"; fb.innerHTML = o.no || "Noch nicht. Schau noch einmal genau hin."; }
+    });
+    box.appendChild(b);
+  });
+  host.append(p, box, fb);
+}
+/* Zahleneingabe */
+function nq(host, o){
+  const id = "in" + (++uid), w = document.createElement("div");
+  w.innerHTML = '<p class="qq">' + o.q + '</p><div class="inl"><input type="text" inputmode="decimal" id="' + id + '" aria-label="Antwort" autocomplete="off"><span>' + (o.unit || "") + '</span><button class="btn">Prüfen</button></div><p class="fb"></p>';
+  host.appendChild(w);
+  const inp = w.querySelector("input"), btn = w.querySelector("button"), fb = w.querySelector(".fb");
+  let miss = false;
+  const check = () => {
+    const v = parseNum(inp.value);
+    if (isNaN(v)){ fb.className = "fb no"; fb.textContent = "Gib eine Zahl ein."; return; }
+    if (Math.abs(v - o.a) <= (o.tol === undefined ? 0.01 : o.tol)){
+      fb.className = "fb ok"; fb.innerHTML = o.ok || "Richtig."; inp.disabled = true; btn.disabled = true; if (o.onOk) o.onOk(!miss);
+    } else { miss = true; fb.className = "fb no"; fb.innerHTML = o.hint || "Das stimmt noch nicht. Rechne noch einmal nach."; }
+  };
+  btn.addEventListener("click", check);
+  inp.addEventListener("keydown", e => { if (e.key === "Enter") check(); });
+}
+/* Aufgabenfolge */
+function seq(host, n, label, render, onAll){
+  let i = 0;
+  const head = document.createElement("p"); head.className = "count";
+  const body = document.createElement("div"), navd = document.createElement("div"); navd.className = "controls";
+  host.append(head, body, navd);
+  function show(){
+    head.textContent = label + " " + (i + 1) + " von " + n; body.innerHTML = ""; navd.innerHTML = "";
+    render(i, body, () => {
+      if (navd.firstChild) return;
+      const b = document.createElement("button"); b.className = "btn"; b.textContent = i < n - 1 ? "Weiter" : "Abschließen";
+      b.addEventListener("click", () => {
+        if (i < n - 1){ i++; show(); }
+        else { head.textContent = "Geschafft"; body.innerHTML = '<p class="fb ok">Alle ' + n + ' gelöst.</p>'; navd.innerHTML = ""; if (onAll) onAll(body); }
+      });
+      navd.appendChild(b);
+    });
+  }
+  show();
+}
+
+/* Zeichnen */
+function drawMat(g, base, lineCol){
+  g.fillStyle = base; g.fillRect(0, 0, W, H); g.lineWidth = 1; g.strokeStyle = lineCol;
+  for (let x = 0; x <= W; x += 25){ g.globalAlpha = (x % 100 === 0) ? 0.35 : 0.14; g.beginPath(); g.moveTo(x + .5, 0); g.lineTo(x + .5, H); g.stroke(); }
+  for (let y = 0; y <= H; y += 25){ g.globalAlpha = (y % 100 === 0) ? 0.35 : 0.14; g.beginPath(); g.moveTo(0, y + .5); g.lineTo(W, y + .5); g.stroke(); }
+  g.globalAlpha = 1; g.strokeStyle = "#f3f1ea"; g.lineWidth = 6; g.strokeRect(9, 9, W - 18, H - 18);
+}
+function arrow(g, x0, y0, x1, y1, col, label, o){
+  o = o || {};
+  const dx = x1 - x0, dy = y1 - y0, L = Math.hypot(dx, dy);
+  g.save(); g.lineCap = "round"; g.lineJoin = "round"; if (o.alpha) g.globalAlpha = o.alpha;
+  if (L < 3){ g.fillStyle = col; g.beginPath(); g.arc(x0, y0, 4, 0, 7); g.fill(); g.restore(); return; }
+  const nx = dx / L, ny = dy / L, hs = Math.min(13, L * .5), w = o.w || 5;
+  const pass = (c, lw) => {
+    g.strokeStyle = c; g.fillStyle = c; g.lineWidth = lw;
+    if (o.dash) g.setLineDash(o.dash);
+    g.beginPath(); g.moveTo(x0, y0); g.lineTo(x1 - nx * hs * 1.2, y1 - ny * hs * 1.2); g.stroke(); g.setLineDash([]);
+    g.beginPath(); g.moveTo(x1, y1);
+    g.lineTo(x1 - nx * hs * 1.6 - ny * hs * .75, y1 - ny * hs * 1.6 + nx * hs * .75);
+    g.lineTo(x1 - nx * hs * 1.6 + ny * hs * .75, y1 - ny * hs * 1.6 - nx * hs * .75);
+    g.closePath(); g.fill(); g.lineWidth = Math.max(1, lw - w + 1); g.stroke();
+  };
+  if (!o.noHalo) pass("#fff", w + 4);
+  pass(col, w);
+  if (label){
+    const mx = o.tip ? x1 + nx * (g.measureText ? 52 : 52) : (x0 + x1) / 2 + ny * 18, my = o.tip ? y1 + ny * 20 : (y0 + y1) / 2 - nx * 18;
+    g.font = "bold 16px Segoe UI, system-ui, sans-serif"; g.textAlign = "center"; g.textBaseline = "middle";
+    g.lineWidth = 4; g.strokeStyle = "#fff"; g.strokeText(label, mx, my); g.fillStyle = o.labelCol || col; g.fillText(label, mx, my);
+  }
+  g.restore();
+}
+function drawCar(g, c){
+  const f = c.crF || 0, r = c.crR || 0;
+  g.save(); g.translate(c.x, c.y); g.rotate(c.ang);
+  g.fillStyle = "rgba(0,0,0,.25)"; g.beginPath(); g.roundRect(-29 + r, -13, 62 - f - r, 34, 9); g.fill();
+  g.fillStyle = "#151515";
+  [[-22, -21], [10, -21], [-22, 15], [10, 15]].forEach(w => { g.beginPath(); g.roundRect(w[0], w[1], 13, 6, 2); g.fill(); });
+  g.fillStyle = c.col; g.beginPath(); g.roundRect(-31 + r, -17, 62 - f - r, 34, f + r > 3 ? 4 : 9); g.fill();
+  g.strokeStyle = "rgba(0,0,0,.35)"; g.lineWidth = 2; g.stroke();
+  g.fillStyle = "#bfe3f5"; g.beginPath(); g.roundRect(2 - f * .3, -12, 12, 24, 4); g.fill();
+  g.fillStyle = "#9cc8de"; g.beginPath(); g.roundRect(-20 + r * .3, -11, 9, 22, 3); g.fill();
+  g.fillStyle = "#fff"; g.fillRect(-9, -3, 9, 6);
+  if (f > 3){ g.strokeStyle = "rgba(0,0,0,.55)"; g.lineWidth = 2; g.beginPath(); const x = 31 - f; g.moveTo(x - 5, -15); for (let i = 0; i < 6; i++) g.lineTo(x - (i % 2 ? 6 : 1), -15 + (i + 1) * 5); g.stroke(); }
+  else { g.fillStyle = "#ffe98a"; g.fillRect(27, -13, 4, 6); g.fillRect(27, 7, 4, 6); }
+  if (r > 3){ g.strokeStyle = "rgba(0,0,0,.55)"; g.lineWidth = 2; g.beginPath(); const x = -31 + r; g.moveTo(x + 5, -15); for (let i = 0; i < 6; i++) g.lineTo(x + (i % 2 ? 6 : 1), -15 + (i + 1) * 5); g.stroke(); }
+  g.restore();
+}
+function hud(g, rows){
+  g.save(); g.textAlign = "left"; g.textBaseline = "alphabetic";
+  rows.forEach((r, i) => {
+    const y = 22 + i * 32;
+    g.fillStyle = "rgba(0,0,0,.4)"; g.fillRect(24, y, 300, 28);
+    g.fillStyle = r.col; g.fillRect(30, y + 7, 14, 14); g.strokeStyle = "#fff"; g.lineWidth = 1; g.strokeRect(30, y + 7, 14, 14);
+    g.fillStyle = "#fff"; g.font = "600 14px Segoe UI, system-ui, sans-serif"; g.fillText("Tempo", 52, y + 19);
+    g.fillStyle = "rgba(255,255,255,.25)"; g.fillRect(104, y + 8, 130, 12);
+    g.fillStyle = "#ffd23f"; g.fillRect(104, y + 8, 130 * clamp(r.v / 450, 0, 1), 12);
+    g.fillStyle = "#fff"; g.fillText(cms(r.v) + " cm/s", 244, y + 19);
+  });
+  g.restore();
+}
+function trail(g, pts){ g.fillStyle = "rgba(255,255,255,.5)"; for (const p of pts){ g.beginPath(); g.arc(p.x, p.y, 2, 0, 7); g.fill(); } }
+function drawHand(g, h){
+  g.fillStyle = "#f2c29b"; g.strokeStyle = "#a8714b"; g.lineWidth = 3;
+  g.beginPath(); g.arc(h.x, h.y, 16, 0, 7); g.fill(); g.stroke();
+  g.fillStyle = "#fbe3d0"; g.beginPath(); g.arc(h.x - 4, h.y - 4, 6, 0, 7); g.fill();
+}
+function drawFlash(g, fl){
+  g.strokeStyle = "#ffd23f"; g.lineWidth = 3; g.lineCap = "round";
+  for (const f of fl){ g.globalAlpha = clamp(f.life * 4, 0, 1);
+    for (let i = 0; i < 8; i++){ const a = i * Math.PI / 4 + .3, r0 = 7 + (0.3 - f.life) * 30; g.beginPath(); g.moveTo(f.x + Math.cos(a) * r0, f.y + Math.sin(a) * r0); g.lineTo(f.x + Math.cos(a) * (r0 + 8), f.y + Math.sin(a) * (r0 + 8)); g.stroke(); } }
+  g.globalAlpha = 1;
+}
+
+const EFF = [["fast", "wird schneller"], ["slow", "wird langsamer"], ["dir", "ändert die Richtung"], ["def", "wird verformt"], ["none", "nichts ändert sich"]];
+const YN = [["j", "Ja"], ["n", "Nein"]];
+
+/* ============================================================
+   Navigation und Fortschritt
+   ============================================================ */
+const CH = [["k1", "1 · Mit Berührung"], ["k2", "2 · Ohne Berührung"], ["k3", "3 · Was ist eine Kraft?"], ["k4", "4 · Kraftpfeile"], ["k5", "5 · Kräfte addieren"], ["k6", "6 · Abschluss-Check"]];
+const done = new Set();
+try { JSON.parse(localStorage.getItem("kraftlabor-done") || "[]").forEach(x => done.add(x)); } catch (e) {}
+let active = "k1";
+const scenes = {};
+function renderNav(){
+  const nav = $("nav"); nav.innerHTML = "";
+  CH.forEach(([id, t]) => {
+    const b = document.createElement("button"); b.setAttribute("role", "tab"); b.id = "tab-" + id; b.textContent = t;
+    if (id === "k3" || id === "k4" || id === "k5"){ const tg = document.createElement("span"); tg.className = "abtag"; tg.textContent = "AB"; tg.title = "Hier arbeitest du auf dem Arbeitsblatt"; b.appendChild(tg); }
+    b.setAttribute("aria-selected", id === active ? "true" : "false"); if (done.has(id)) b.classList.add("done");
+    b.addEventListener("click", () => go(id)); nav.appendChild(b);
+  });
+  $("prog").textContent = done.size + " von " + CH.length + " Kapiteln abgeschlossen";
+}
+function go(id){
+  if (!CH.some(c => c[0] === id)) id = "k1";
+  active = id; CH.forEach(([c]) => $(c).hidden = c !== id); renderNav();
+  try { history.replaceState(null, "", "#" + id); } catch (e) {}
+  window.scrollTo(0, 0);
+}
+function nextBtn(from){
+  const i = CH.findIndex(c => c[0] === from); if (i < 0 || i >= CH.length - 1) return null;
+  const nx = CH[i + 1], d = document.createElement("div"); d.className = "controls next-ch";
+  const b = document.createElement("button"); b.className = "btn"; b.textContent = "Zum nächsten Kapitel: " + nx[1].replace(/^\d+ · /, "") + " →";
+  b.addEventListener("click", () => go(nx[0])); d.appendChild(b); return d;
+}
+function chapterDone(id){ done.add(id); try { localStorage.setItem("kraftlabor-done", JSON.stringify([...done])); } catch (e) {} renderNav(); }
+
+/* ============================================================
+   Versuchsreihe (Kapitel 1 und 2)
+   ============================================================ */
+function series(k, steps, scene, unitName){
+  let i = 0, pred = null; const st = steps.map(() => false);
+  const q = $(k + "-q"), startB = $(k + "-start"), againB = $(k + "-again"), nextB = $(k + "-next"), prevB = $(k + "-prev");
+  function dots(){
+    const d = $(k + "-steps"); d.innerHTML = "";
+    steps.forEach((s, n) => { const b = document.createElement("button"); b.className = "dot" + (n === i ? " cur" : "") + (st[n] ? " ok" : ""); b.textContent = s.free ? "★" : n + 1;
+      b.setAttribute("aria-label", s.free ? "Knobelaufgaben" : "Versuch " + (n + 1));
+      if (!reach(n)){ b.disabled = true; b.title = "Schließe zuerst die vorherigen Versuche ab."; }
+      b.addEventListener("click", () => { if (reach(n)) load(n); }); d.appendChild(b); });
+    lockNext();
+  }
+  const reach = n => n === 0 || st[n - 1];
+  const hint = document.createElement("span"); hint.className = "lockhint"; nextB.after(hint);
+  function lockNext(){
+    const locked = !st[i] && !steps[i].free;
+    nextB.disabled = locked;
+    hint.textContent = locked && i < steps.length - 1 ? "Weiter geht es, wenn du Vermutung, Versuch und Auswertung geschafft hast." : "";
+  }
+  function load(n){
+    i = n; const s = steps[i];
+    $(k + "-title").textContent = (s.free ? "Knobelaufgaben: " : "Versuch " + (i + 1) + ": ") + s.title; $(k + "-text").innerHTML = s.text; dots();
+    prevB.hidden = i === 0; nextB.hidden = i === steps.length - 1; nextB.textContent = i === steps.length - 2 ? "Zu den Knobelaufgaben" : "Nächster Versuch";
+    $(k + "-obs").textContent = "";
+    document.querySelectorAll("." + k + "-free").forEach(e => e.hidden = !s.free);
+    startB.hidden = againB.hidden = $(k + "-slowl").hidden = !!s.free;
+    q.innerHTML = "";
+    if (s.free){ scene.free(); missions(s); }
+    else { scene.load(s); startB.disabled = true; againB.disabled = true; pred = null;
+      mc(q, { q: "Vermutung: " + s.pq, opts: s.popts || EFF, any: true, ok: "Vermutung notiert. Starte jetzt den Versuch.", onOk: v => { pred = v; startB.disabled = false; } }); }
+  }
+  function obsLine(res){ $(k + "-obs").textContent = res.map(r => r.name + ": vorher " + cms(r.v0) + " cm/s, nachher " + cms(r.v1) + " cm/s" + (r.note || "")).join("  ·  "); }
+  startB.addEventListener("click", () => {
+    startB.disabled = true; againB.disabled = true; const s = steps[i];
+    scene.run(res => { againB.disabled = false; if (res.length) obsLine(res); observe(s); });
+  });
+  againB.addEventListener("click", () => { againB.disabled = true; scene.run(() => { againB.disabled = false; }); });
+  function observe(s){
+    q.innerHTML = "";
+    const ask = j => {
+      if (j >= s.qs.length){
+        const e = document.createElement("p"); e.className = "expl";
+        e.innerHTML = s.expl + " " + (pred === s.qs[0].a ? "<strong>Deine Vermutung hat gestimmt.</strong>" : "<strong>Deine Vermutung war anders. Genau dafür macht man Versuche.</strong>");
+        q.appendChild(e); st[i] = true; dots(); return;
+      }
+      const d = document.createElement("div"); q.appendChild(d);
+      mc(d, { q: s.qs[j].q, opts: s.qs[j].opts || EFF, a: s.qs[j].a, ok: s.qs[j].ok, no: "Noch nicht. Sieh dir den Versuch noch einmal an, am besten in Zeitlupe.", onOk: () => ask(j + 1) });
+    };
+    ask(0);
+  }
+  function missions(s){
+    let m = 0;
+    const show = () => {
+      q.innerHTML = "";
+      if (m >= s.missions.length){
+        scene.mission(null);
+        mc(q, { q: s.fq, opts: s.fopts, a: s.fa, ok: s.fok, no: s.fno, onOk: () => { st[i] = true; dots(); chapterDone(k); const nb = nextBtn(k); if (nb && !q.querySelector(".next-ch")) q.appendChild(nb); } }); return;
+      }
+      const mi = s.missions[m];
+      q.innerHTML = "<h3>Knobelaufgabe " + (m + 1) + " von " + s.missions.length + "</h3><p class='qq'>" + mi.t + "</p><p class='fb'></p>";
+      scene.mission(mi, () => {
+        const fb = q.querySelector(".fb"); fb.className = "fb ok"; fb.textContent = mi.ok;
+        const after = () => { const b = document.createElement("button"); b.className = "btn"; b.textContent = m < s.missions.length - 1 ? "Nächste Aufgabe" : "Zur Forscherfrage";
+          b.addEventListener("click", () => { m++; show(); }); q.appendChild(b); };
+        if (mi.mc){ const d = document.createElement("div"); q.appendChild(d); mc(d, Object.assign({}, mi.mc, { onOk: after })); } else after();
+      });
+    };
+    show();
+  }
+  nextB.addEventListener("click", () => { if (st[i]) load(Math.min(i + 1, steps.length - 1)); });
+  prevB.addEventListener("click", () => load(Math.max(i - 1, 0)));
+  load(0);
+}
+
+/* ============================================================
+   KAPITEL 1: Autos
+   ============================================================ */
+const CR = 24, FR = 16, KX = 700, DMAX = 52, SEG = 6, NSEG = Math.ceil(H / SEG);
+const RED = "#e5482d", BLUE = "#2f6fd0";
+const CAR = (function(){
+  const cv = $("k1-cv"), g = setup(cv, W, H), dent = new Float32Array(NSEG);
+  let cars = [], knete = false, rest = .5, handFn = null, hand = null, dur = 3, t = 0, running = false, onEnd = null, cfg = null;
+  let free = false, mKey = null, mCb = null, ep = null, noC = 1, v0 = [], flash = [], tA = 0, mode = null, parkT = 0;
+  const Z = { x0: 470, y0: 50, x1: 600, y1: 180 };
+  const finger = { x: 0, y: 0, vx: 0, vy: 0, down: false, lastT: 0 };
+  cv.addEventListener("pointerdown", e => { if (!free) return; cv.setPointerCapture(e.pointerId); const p = ppos(cv, e, W, H);
+    finger.x = p.x; finger.y = p.y; finger.vx = finger.vy = 0; finger.down = true; finger.lastT = performance.now(); e.preventDefault(); });
+  cv.addEventListener("pointermove", e => { if (!finger.down) return; const p = ppos(cv, e, W, H), now = performance.now(), dt = Math.max((now - finger.lastT) / 1000, .004);
+    finger.vx = finger.vx * .5 + clamp((p.x - finger.x) / dt, -700, 700) * .5; finger.vy = finger.vy * .5 + clamp((p.y - finger.y) / dt, -700, 700) * .5;
+    finger.x = p.x; finger.y = p.y; finger.lastT = now; });
+  ["pointerup", "pointercancel"].forEach(n => cv.addEventListener(n, () => { finger.down = false; }));
+  const mk = c => Object.assign({ vx: 0, vy: 0, crF: 0, crR: 0, pts: [], col: RED, name: "Rotes Auto" }, c, { ang: c.ang !== undefined ? c.ang : Math.atan2(c.vy || 0, c.vx || 0) });
+  function reset(){ const s = cfg.make(); cars = s.cars.map(mk); knete = !!s.knete; rest = s.e === undefined ? .5 : s.e; handFn = s.hand || null; dur = s.dur || 3;
+    t = 0; dent.fill(0); running = false; hand = null; flash = []; v0 = cars.map(sp); }
+  function place(roll){ cars = [mk({ x: roll ? 110 : 330, y: 250, vx: roll ? 150 : 0 })]; ep = null; }
+  function press(cx, cy, r){
+    let def = false, hard = 0;
+    const i0 = clamp(Math.floor((cy - r) / SEG), 0, NSEG - 1), i1 = clamp(Math.ceil((cy + r) / SEG), 0, NSEG - 1);
+    for (let i = i0; i <= i1; i++){
+      const dy = (i + .5) * SEG - cy; if (Math.abs(dy) >= r) continue;
+      const front = cx + Math.sqrt(r * r - dy * dy), pen = front - (KX + dent[i]);
+      if (pen > 0){ if (dent[i] < DMAX){ dent[i] = Math.min(DMAX, dent[i] + pen); def = true; }
+        const rs = front - (KX + dent[i]); if (rs > .05 && rs > hard) hard = rs; }
+    }
+    return { def, hard };
+  }
+  const maxDent = () => { let m = 0; for (let i = 0; i < NSEG; i++) if (dent[i] > m) m = dent[i]; return m; };
+  function hit(key){ if (free && mKey === key){ const cb = mCb; mKey = null; mCb = null; if (cb) cb(); } }
+  function sub(dt){
+    t += dt;
+    if (free){ hand = finger.down ? { x: knete ? Math.min(finger.x, KX + 8) : finger.x, y: finger.y, vx: finger.vx, vy: finger.vy } : null; }
+    else { const p = handFn ? handFn(t) : null;
+      hand = p ? { x: p.x, y: p.y, vx: hand ? clamp((p.x - hand.x) / dt, -700, 700) : 0, vy: hand ? clamp((p.y - hand.y) / dt, -700, 700) : 0 } : null; }
+    let contact = false;
+    if (hand){
+      for (const c of cars){
+        const dx = c.x - hand.x, dy = c.y - hand.y, d = Math.hypot(dx, dy) || .001, ov = CR + FR - d;
+        if (ov > 0){ const nx = dx / d, ny = dy / d, vn = c.vx * nx + c.vy * ny, fn = hand.vx * nx + hand.vy * ny, a = clamp(90 * ov + 20 * (fn - vn), 0, 20000);
+          c.vx += nx * a * dt; c.vy += ny * a * dt; if (c === cars[0]) contact = true;
+          if (a > 200 && (!flash.length || flash[flash.length - 1].life < .2)) flash.push({ x: hand.x + nx * FR, y: hand.y + ny * FR, life: .3 }); }
+      }
+      if (knete) press(hand.x, hand.y, FR);
+    }
+    for (let i = 0; i < cars.length; i++) for (let j = i + 1; j < cars.length; j++){
+      const a = cars[i], b = cars[j], dx = b.x - a.x, dy = b.y - a.y, d = Math.hypot(dx, dy) || .001;
+      if (d < 2 * CR){ const nx = dx / d, ny = dy / d, ov = 2 * CR - d; a.x -= nx * ov / 2; a.y -= ny * ov / 2; b.x += nx * ov / 2; b.y += ny * ov / 2;
+        const vr = (b.vx - a.vx) * nx + (b.vy - a.vy) * ny;
+        if (vr < 0){ const jj = -(1 + rest) * vr / 2; a.vx -= jj * nx; a.vy -= jj * ny; b.vx += jj * nx; b.vy += jj * ny;
+          const imp = -vr; if (imp > 40){ const cr = imp / 28 * (1 - rest);
+            [[a, nx, ny], [b, -nx, -ny]].forEach(([c, ux, uy]) => { const cs = Math.cos(c.ang) * ux + Math.sin(c.ang) * uy; if (cs > .5) c.crF = Math.min(15, c.crF + cr); else if (cs < -.5) c.crR = Math.min(10, c.crR + cr); });
+            flash.push({ x: a.x + nx * CR, y: a.y + ny * CR, life: .3 }); } } }
+    }
+    const c0 = cars[0], s0 = sp(c0);
+    if (free && mKey === "park"){ if (c0.x > Z.x0 && c0.x < Z.x1 && c0.y > Z.y0 && c0.y < Z.y1 && s0 < 12){ parkT += dt; if (parkT > .5) hit("park"); } else parkT = 0; }
+    if (free && mKey){
+      if (contact){ noC = 0; if (!ep) ep = { s0: s0, h0: s0 > 30 ? Math.atan2(c0.vy, c0.vx) : null }; } else { noC += dt; if (noC > .25) ep = null; }
+      if (ep){ if (s0 > ep.s0 + 40) hit("fast"); if (ep.s0 > 60 && s0 < ep.s0 - 40) hit("slow");
+        if (ep.h0 !== null && s0 > 30){ const d = Math.abs(angDiff(Math.atan2(c0.vy, c0.vx), ep.h0)); if (d > .44 && d < 2.6) hit("dir"); } }
+    }
+    for (const c of cars){
+      let s = sp(c); if (s > 520){ c.vx *= 520 / s; c.vy *= 520 / s; s = 520; }
+      c.x += c.vx * dt; c.y += c.vy * dt;
+      if (c.x < 12 + CR){ c.x = 12 + CR; c.vx = Math.abs(c.vx) * .92; }
+      if (c.y < 12 + CR){ c.y = 12 + CR; c.vy = Math.abs(c.vy) * .92; }
+      if (c.y > H - 12 - CR){ c.y = H - 12 - CR; c.vy = -Math.abs(c.vy) * .92; }
+      if (knete){ const k = press(c.x, c.y, CR);
+        if (k.def){ if (c.vx > 0) c.vx = Math.max(0, c.vx - 900 * dt); c.vy *= Math.max(0, 1 - 6 * dt); if (maxDent() >= 30) hit("dent"); }
+        if (k.hard > 0){ c.x -= k.hard; if (c.vx > 0) c.vx = 0; } }
+      else if (c.x > W - 12 - CR){ c.x = W - 12 - CR; c.vx = -Math.abs(c.vx) * .92; }
+      if (s > 12) c.ang += angDiff(Math.atan2(c.vy, c.vx), c.ang) * Math.min(1, 12 * dt);
+    }
+    tA += dt; if (tA > .06){ tA = 0; for (const c of cars) if (sp(c) > 8){ c.pts.push({ x: c.x, y: c.y }); if (c.pts.length > 90) c.pts.shift(); } }
+    for (const f of flash) f.life -= dt; flash = flash.filter(f => f.life > 0);
+    finger.vx *= .9; finger.vy *= .9;
+  }
+  function step(dt){
+    if (!free && !running) return;
+    if (!free && $("k1-slow").checked) dt *= .3;
+    for (let i = 0; i < 4; i++) sub(dt / 4);
+    if (!free && t >= dur){ running = false; const cb = onEnd; onEnd = null; if (cb) cb(cars.map((c, i) => ({ name: c.name, v0: v0[i], v1: sp(c) }))); }
+  }
+  function draw(){
+    drawMat(g, "#1f5d4c", "#d9f2e6");
+    if (knete){
+      g.fillStyle = "#7d5bd0"; g.beginPath(); g.moveTo(W - 12, 12); g.lineTo(KX + dent[0], 12);
+      for (let i = 0; i < NSEG; i++) g.lineTo(KX + dent[i], clamp((i + .5) * SEG, 12, H - 12));
+      g.lineTo(KX + dent[NSEG - 1], H - 12); g.lineTo(W - 12, H - 12); g.closePath(); g.fill(); g.strokeStyle = "#5a3fa8"; g.lineWidth = 3; g.stroke();
+      g.save(); g.translate(W - 30, H / 2); g.rotate(-Math.PI / 2); g.fillStyle = "#fff"; g.font = "700 20px Trebuchet MS, Segoe UI, sans-serif"; g.textAlign = "center"; g.fillText("KNETE", 0, 6); g.restore();
+    }
+    if (free && mode === "park"){ g.save(); g.fillStyle = "rgba(255,210,63,.22)"; g.fillRect(Z.x0, Z.y0, Z.x1 - Z.x0, Z.y1 - Z.y0); g.strokeStyle = "#ffd23f"; g.lineWidth = 4; g.setLineDash([12, 8]); g.strokeRect(Z.x0, Z.y0, Z.x1 - Z.x0, Z.y1 - Z.y0);
+      g.fillStyle = "#ffd23f"; g.font = "700 18px Trebuchet MS, Segoe UI, sans-serif"; g.textAlign = "center"; g.fillText("PARKPLATZ", (Z.x0 + Z.x1) / 2, Z.y0 + 26); g.restore(); }
+    if (free && mode === "dent") $("k1-obs").textContent = "Tiefste Delle in der Knete: " + de(Math.round(maxDent()) / 10) + " cm";
+    for (const c of cars) trail(g, c.pts);
+    for (const c of cars) drawCar(g, c);
+    if (hand) drawHand(g, hand);
+    drawFlash(g, flash);
+    hud(g, cars.map(c => ({ col: c.col, v: sp(c) })));
+    if (!free && !running && t === 0){ g.fillStyle = "rgba(0,0,0,.45)"; g.fillRect(250, H - 62, 300, 34); g.fillStyle = "#fff"; g.font = "600 15px Segoe UI, system-ui, sans-serif"; g.textAlign = "center"; g.fillText("Startaufstellung", 400, H - 40); g.textAlign = "left"; }
+  }
+  $("k1-roll").addEventListener("click", () => place(true));
+  $("k1-rest").addEventListener("click", () => place(false));
+  return { step, draw,
+    load(s){ free = false; cfg = s; reset(); },
+    run(cb){ reset(); onEnd = cb; running = true; },
+    free(){ free = true; knete = true; rest = .5; handFn = null; hand = null; dent.fill(0); flash = []; mKey = null; place(false); },
+    mission(mi, cb){ if (!mi){ mKey = null; mode = null; $("k1-obs").textContent = ""; return; } mKey = mode = mi.key; mCb = cb; parkT = 0; dent.fill(0); $("k1-obs").textContent = ""; place(false); }
+  };
+})();
+scenes.k1 = [CAR];
+
+series("k1", [
+  { title: "Die Hand schiebt an", text: "Ein Auto steht still auf der Matte. Gleich schiebt eine Hand von hinten.", pq: "Was passiert mit dem Auto?",
+    make: () => ({ cars: [{ x: 300, y: 250 }], dur: 2.6, hand: t => { const u = t - .3; return u > 0 && u < 1.2 ? { x: 220 + 90 * u * u, y: 250 } : null; } }),
+    qs: [{ q: "Was ist mit dem Auto passiert?", a: "fast" }],
+    expl: "Die Hand übt eine Kraft auf das Auto aus. Wirkung: Das Auto wird schneller." },
+  { title: "Die Hand bremst", text: "Das Auto rollt nach rechts. Eine Hand stellt sich ihm in den Weg und gibt nur langsam nach.", pq: "Was passiert mit dem Auto?",
+    make: () => ({ cars: [{ x: 110, y: 250, vx: 160 }], dur: 3.6, hand: t => t > .6 && t < 2.8 ? { x: 350 + 45 * (t - .6), y: 250 } : null }),
+    qs: [{ q: "Was ist mit dem Auto passiert?", a: "slow" }],
+    expl: "Die Hand übt eine Kraft gegen die Fahrtrichtung aus. Wirkung: Das Auto wird langsamer." },
+  { title: "Auffahrunfall", text: "Das blaue Auto rollt langsam. Das rote Auto kommt schnell von hinten, in derselben Richtung.", pq: "Was passiert mit dem blauen Auto vorn?",
+    make: () => ({ cars: [{ x: 120, y: 250, vx: 230 }, { x: 360, y: 250, vx: 60, col: BLUE, name: "Blaues Auto" }], e: .5, dur: 2.6 }),
+    qs: [{ q: "Was ist mit dem blauen Auto (vorn) passiert?", a: "fast" }, { q: "Und was ist mit dem roten Auto (hinten) passiert?", a: "slow" }],
+    expl: "Beim Stoß wirkt auf jedes Auto eine Kraft: Das blaue wird nach vorn gestoßen und schneller, das rote wird gebremst." },
+  { title: "Frontalzusammenstoß", text: "Zwei Autos fahren gleich schnell genau aufeinander zu.", pq: "Was passiert mit den Autos?",
+    make: () => ({ cars: [{ x: 150, y: 250, vx: 190 }, { x: 650, y: 250, vx: -190, col: BLUE, name: "Blaues Auto" }], e: .05, dur: 2.4 }),
+    qs: [{ q: "Was ist mit dem Tempo der beiden Autos passiert?", a: "slow", ok: "Richtig. Beide werden bis zum Stillstand abgebremst." }, { q: "Sieh dir die Motorhauben an. Was erkennst du?", a: "def" }],
+    expl: "Eine Kraft kann mehrere Wirkungen zugleich haben: Die Autos werden abgebremst und verformt." },
+  { title: "Stoß von der Seite", text: "Das rote Auto rollt nach rechts. Das blaue Auto kommt von unten und trifft es an der Seite.", pq: "Was passiert mit dem roten Auto?",
+    make: () => ({ cars: [{ x: 140, y: 250, vx: 140 }, { x: 350, y: 464, vy: -120, col: BLUE, name: "Blaues Auto" }], e: .6, dur: 3 }),
+    qs: [{ q: "Was ist mit dem roten Auto passiert?", a: "dir", ok: "Richtig. Sieh dir die gepunktete Spur an: Sie hat einen Knick." }],
+    expl: "Die Kraft wirkt quer zur Fahrtrichtung. Wirkung: Das rote Auto ändert seine Bewegungsrichtung." },
+  { title: "Fahrt in die Knete", text: "Am rechten Rand liegt ein dicker Streifen Knete. Das Auto fährt schnell darauf zu.", pq: "Was passiert mit der Knete?",
+    make: () => ({ cars: [{ x: 160, y: 250, vx: 260 }], knete: true, dur: 3 }),
+    qs: [{ q: "Was ist mit der Knete passiert?", a: "def" }, { q: "Und was ist mit dem Auto passiert?", a: "slow" }],
+    expl: "Das Auto übt eine Kraft auf die Knete aus und verformt sie. Die Knete übt eine Kraft auf das Auto aus und bremst es." },
+  { free: true, title: "Jetzt bist du dran", text: "Jetzt wendest du an, was du beobachtet hast. Drücke mit dem Finger oder der Maus auf die Matte. Dort erscheint dein Finger. Mit den Knöpfen unter der Matte stellst du das Auto neu hin oder lässt es losrollen.",
+    missions: [
+      { key: "park", t: "Einparken: Bringe das Auto auf den gelben Parkplatz und bringe es dort zum Stehen. Du darfst nur mit dem Finger schieben, lenken und bremsen.", ok: "Eingeparkt.",
+        mc: { q: "Welche Wirkungen von Kräften hast du dafür gebraucht?", a: "c", opts: [["a", "Nur schneller werden"], ["b", "Schneller werden und verformen"], ["c", "Schneller werden, Richtung ändern und langsamer werden"]], ok: "Richtig. Jede Änderung der Bewegung braucht eine Kraft: zum Anfahren, zum Lenken und zum Bremsen." } },
+      { key: "dent", t: "Dellen-Rekord: Unter der Matte siehst du, wie tief die Knete eingedrückt ist. Schaffe mit dem Auto eine Delle von mindestens 3 cm. Probiere es erst mit dem Knopf „Auto losrollen lassen“.", ok: "Geschafft: Die Delle ist mindestens 3 cm tief.",
+        mc: { q: "Wie hast du eine tiefere Delle bekommen?", a: "b", opts: [["a", "Mit einem langsameren Auto"], ["b", "Mit einem schnelleren Auto oder stärkerem Drücken"], ["c", "Das war Zufall"]], ok: "Richtig. Eine größere Kraft hat eine größere Wirkung. Kräfte können also verschieden groß sein." } }],
+    fq: "Forscherfrage: Musste in allen Versuchen dieses Kapitels etwas das Auto oder die Knete berühren, damit sich etwas ändert?",
+    fopts: [["j", "Ja, immer"], ["n", "Nein, es ging auch ohne"]], fa: "j",
+    fok: "Richtig. Hand, Finger, Auto und Knete übertragen ihre Kraft durch Berührung. Geht es auch ohne? Weiter zu Kapitel 2.", fno: "Überlege noch einmal: Hat sich je etwas geändert, ohne dass etwas berührt wurde?" }
+], CAR);
+
+/* ============================================================
+   KAPITEL 2: Magnet
+   ============================================================ */
+const MAG = (function(){
+  const cv = $("k2-cv"), g = setup(cv, W, H), BR = 13, MW = 40, MH = 19;
+  const BOX = { x0: 12, y0: 318, x1: 222, y1: H - 12 }, STRIP = { bx: 118, by: 476, tx: 118, ty: 352 };
+  let ball = null, mag = { x: 690, y: 440 }, magFn = null, dur = 4, t = 0, running = false, onEnd = null, cfg = null, noBall = false;
+  let free = false, drag = null, bend = 0, hist = [], mKey = null, mCb = null, pts = [], tA = 0, pA = 0, v0 = 0, vHit = 0, mode = null;
+  const G = { x0: 590, y0: 320, x1: 720, y1: 450 };
+  cv.addEventListener("pointerdown", e => { if (!free) return; const p = ppos(cv, e, W, H);
+    if (Math.abs(p.x - mag.x) < MW + 24 && Math.abs(p.y - mag.y) < MH + 24){ cv.setPointerCapture(e.pointerId); drag = { dx: mag.x - p.x, dy: mag.y - p.y }; e.preventDefault(); }
+    else $("k2-obs").textContent = "Fasse den Magneten an und ziehe ihn. Die Kugel darfst du nicht anfassen."; });
+  cv.addEventListener("pointermove", e => { if (!drag) return; const p = ppos(cv, e, W, H); mag.x = clamp(p.x + drag.dx, 12 + MW, W - 12 - MW); mag.y = clamp(p.y + drag.dy, 12 + MH, H - 12 - MH); });
+  ["pointerup", "pointercancel"].forEach(n => cv.addEventListener(n, () => { drag = null; }));
+  function setBall(roll){ ball = { x: roll ? 40 : 400, y: 170, vx: roll ? 135 : 0, vy: 0, stuck: false, ox: 0, oy: 0 }; hist = []; pts = []; }
+  function reset(){ const s = cfg.make(); noBall = !!s.noBall; ball = Object.assign({ vx: 0, vy: 0, stuck: false, ox: 0, oy: 0 }, s.ball || { x: 400, y: 170 });
+    mag = Object.assign({}, s.mag); magFn = s.magFn || null; dur = s.dur || 4; t = 0; running = false; bend = 0; hist = []; pts = []; v0 = sp(ball); }
+  function hit(key){ if (free && mKey === key){ const cb = mCb; mKey = null; mCb = null; if (cb) cb(); } }
+  function sub(dt){
+    t += dt;
+    if (!free && magFn){ const p = magFn(t); mag.x = p.x; mag.y = p.y; }
+    const sdx = mag.x - STRIP.tx, sdy = mag.y - STRIP.ty, sd = Math.max(Math.hypot(sdx, sdy), 30);
+    bend += (clamp(9e5 / (sd * sd) * (sdx / sd), -62, 62) - bend) * Math.min(1, 10 * dt);
+    if (Math.abs(bend) > 22) hit("def");
+    if (noBall) return;
+    const b = ball;
+    if (b.stuck){ b.x = mag.x + b.ox; b.y = mag.y + b.oy; return; }
+    const dx = mag.x - b.x, dy = mag.y - b.y, d = Math.max(Math.hypot(dx, dy), 20), a = Math.min(4e8 / (d * d * d), 3200);
+    if (free && mode === "dist"){
+      if (!b.rolled){
+        if (a < 45){ b.vx = b.vy = 0; $("k2-obs").textContent = "Abstand Magnet – Kugel: " + Math.round(d / 10) + " cm"; return; }
+        b.rolled = true; $("k2-obs").textContent = "Die Kugel ist bei " + Math.round(d / 10) + " cm Abstand losgerollt."; hit("dist"); }
+    }
+    b.vx += dx / d * a * dt; b.vy += dy / d * a * dt;
+    let s = sp(b); if (s > 620){ b.vx *= 620 / s; b.vy *= 620 / s; s = 620; }
+    b.x += b.vx * dt; b.y += b.vy * dt;
+    let bounced = false;
+    if (b.x < 12 + BR){ b.x = 12 + BR; b.vx = Math.abs(b.vx) * .9; bounced = true; }
+    if (b.x > W - 12 - BR){ b.x = W - 12 - BR; b.vx = -Math.abs(b.vx) * .9; bounced = true; }
+    if (b.y < 12 + BR){ b.y = 12 + BR; b.vy = Math.abs(b.vy) * .9; bounced = true; }
+    if (b.y > H - 12 - BR){ b.y = H - 12 - BR; b.vy = -Math.abs(b.vy) * .9; bounced = true; }
+    { const qx = clamp(b.x, BOX.x0, BOX.x1), qy = clamp(b.y, BOX.y0, BOX.y1); let ex = b.x - qx, ey = b.y - qy, ed = Math.hypot(ex, ey);
+      if (ed < BR){ if (ed < .001){ ex = 0; ey = -1; ed = 1; b.y = BOX.y0 - BR; } else { b.x = qx + ex / ed * BR; b.y = qy + ey / ed * BR; }
+        const nx = ex / ed, ny = ey / ed, vn = b.vx * nx + b.vy * ny; if (vn < 0){ b.vx -= 1.9 * vn * nx; b.vy -= 1.9 * vn * ny; } bounced = true; } }
+    { const qx = clamp(b.x, mag.x - MW, mag.x + MW), qy = clamp(b.y, mag.y - MH, mag.y + MH); let ex = b.x - qx, ey = b.y - qy, ed = Math.hypot(ex, ey);
+      if (ed < BR){ if (ed < .001){ ex = 0; ey = -1; ed = 1; } vHit = sp(b); b.x = qx + ex / ed * BR; b.y = qy + ey / ed * BR; b.vx = b.vy = 0; b.stuck = true; b.ox = b.x - mag.x; b.oy = b.y - mag.y; hist = [];
+        if (free && mode !== "dist") $("k2-obs").textContent = "Klack! Die Kugel hängt am Magneten. Lege sie neu hin oder lass sie losrollen.";
+        else if (dur > t + .7) dur = t + .7; return; } }
+    if (free && mKey === "goal" && b.x > G.x0 && b.x < G.x1 && b.y > G.y0 && b.y < G.y1){
+      if (mag.x > G.x0 - MW && mag.x < G.x1 + MW && mag.y > G.y0 - MH && mag.y < G.y1 + MH) $("k2-obs").textContent = "Das zählt nicht: Der Magnet darf nicht im Zielfeld liegen.";
+      else hit("goal"); }
+    if (bounced) hist = [];
+    tA += dt;
+    if (tA >= .05){ tA = 0; hist.push({ s, h: Math.atan2(b.vy, b.vx) }); if (hist.length > 12) hist.shift();
+      const o = hist[0];
+      if (free && mKey && hist.length >= 5){
+        if (s > o.s + 35) hit("fast"); if (o.s > 60 && s < o.s - 35) hit("slow");
+        if (s > 40 && o.s > 40){ const dd = Math.abs(angDiff(Math.atan2(b.vy, b.vx), o.h)); if (dd > .4 && dd < 2.6) hit("dir"); } } }
+    pA += dt; if (pA > .05 && s > 8){ pA = 0; pts.push({ x: b.x, y: b.y }); if (pts.length > 130) pts.shift(); }
+  }
+  function step(dt){
+    if (!free && !running) return;
+    if (!free && $("k2-slow").checked) dt *= .3;
+    for (let i = 0; i < 4; i++) sub(dt / 4);
+    if (!free && t >= dur){ running = false; const cb = onEnd; onEnd = null; if (cb) cb(noBall ? [] : [{ name: "Kugel", v0, v1: ball.stuck ? vHit : sp(ball), note: ball.stuck ? " (dann bleibt sie am Magneten hängen)" : "" }]); }
+  }
+  function draw(){
+    const b = ball, m = mag;
+    drawMat(g, "#27506b", "#dcecf7");
+    g.fillStyle = "rgba(0,0,0,.22)"; g.fillRect(BOX.x0, BOX.y0, BOX.x1 - BOX.x0, BOX.y1 - BOX.y0);
+    g.strokeStyle = "#c9a36a"; g.lineWidth = 7; g.strokeRect(BOX.x0 + 3, BOX.y0 + 3, BOX.x1 - BOX.x0 - 6, BOX.y1 - BOX.y0 - 6);
+    g.fillStyle = "#fff"; g.font = "600 13px Segoe UI, system-ui, sans-serif"; g.textAlign = "left"; g.fillText("Stahlstreifen,", 24, 344); g.fillText("unten eingespannt", 24, 361);
+    g.fillStyle = "#6b4a22"; g.fillRect(STRIP.bx - 22, STRIP.by - 12, 44, 16);
+    g.strokeStyle = "rgba(255,255,255,.3)"; g.lineWidth = 2; g.setLineDash([4, 5]); g.beginPath(); g.moveTo(STRIP.bx, STRIP.by - 12); g.lineTo(STRIP.tx, STRIP.ty); g.stroke(); g.setLineDash([]);
+    g.strokeStyle = "#d9dee3"; g.lineWidth = 6; g.lineCap = "round"; g.beginPath(); g.moveTo(STRIP.bx, STRIP.by - 12);
+    g.quadraticCurveTo(STRIP.bx, (STRIP.by + STRIP.ty) / 2, STRIP.tx + bend, STRIP.ty + Math.abs(bend) * .18); g.stroke();
+    if (free && mode === "goal"){ g.save(); g.fillStyle = "rgba(255,210,63,.22)"; g.fillRect(G.x0, G.y0, G.x1 - G.x0, G.y1 - G.y0); g.strokeStyle = "#ffd23f"; g.lineWidth = 4; g.setLineDash([12, 8]); g.strokeRect(G.x0, G.y0, G.x1 - G.x0, G.y1 - G.y0);
+      g.fillStyle = "#ffd23f"; g.font = "700 18px Trebuchet MS, Segoe UI, sans-serif"; g.textAlign = "center"; g.fillText("ZIEL", (G.x0 + G.x1) / 2, G.y0 + 26); g.restore(); }
+    if (!noBall){ trail(g, pts);
+      const gr = g.createRadialGradient(b.x - 4, b.y - 5, 2, b.x, b.y, BR); gr.addColorStop(0, "#f4f6f8"); gr.addColorStop(1, "#6f7b86");
+      g.fillStyle = "rgba(0,0,0,.25)"; g.beginPath(); g.arc(b.x + 3, b.y + 4, BR, 0, 7); g.fill(); g.fillStyle = gr; g.beginPath(); g.arc(b.x, b.y, BR, 0, 7); g.fill(); }
+    g.fillStyle = "rgba(0,0,0,.25)"; g.beginPath(); g.roundRect(m.x - MW + 4, m.y - MH + 5, MW * 2, MH * 2, 5); g.fill();
+    g.fillStyle = "#d83a2e"; g.beginPath(); g.roundRect(m.x - MW, m.y - MH, MW, MH * 2, 5); g.fill();
+    g.fillStyle = "#2c9a4b"; g.beginPath(); g.roundRect(m.x, m.y - MH, MW, MH * 2, 5); g.fill();
+    g.fillStyle = "#fff"; g.font = "700 20px Trebuchet MS, Segoe UI, sans-serif"; g.textAlign = "center"; g.fillText("N", m.x - MW / 2, m.y + 7); g.fillText("S", m.x + MW / 2, m.y + 7);
+    if (free && !drag && pts.length === 0 && !b.stuck){ g.font = "600 14px Segoe UI, system-ui, sans-serif"; g.fillText("Magnet: hier anfassen und ziehen", m.x - 30, m.y - MH - 12); }
+    g.textAlign = "left";
+    if (!noBall) hud(g, [{ col: "#c9d2da", v: b.stuck ? 0 : sp(b) }]);
+    if (!free && !running && t === 0){ g.fillStyle = "rgba(0,0,0,.45)"; g.fillRect(250, H - 62, 300, 34); g.fillStyle = "#fff"; g.font = "600 15px Segoe UI, system-ui, sans-serif"; g.textAlign = "center"; g.fillText("Startaufstellung", 400, H - 40); g.textAlign = "left"; }
+  }
+  $("k2-roll").addEventListener("click", () => setBall(true));
+  $("k2-rest").addEventListener("click", () => setBall(false));
+  return { step, draw,
+    load(s){ free = false; cfg = s; reset(); },
+    run(cb){ reset(); onEnd = cb; running = true; },
+    free(){ free = true; noBall = false; magFn = null; mag = { x: 690, y: 440 }; bend = 0; mKey = null; setBall(false); $("k2-obs").textContent = "Ziehe den Magneten mit dem Finger oder der Maus über die Matte."; },
+    mission(mi, cb){ if (!mi){ mKey = null; mode = null; return; } mKey = mode = mi.key; mCb = cb; mag = mi.key === "goal" ? { x: 400, y: 440 } : { x: 690, y: 440 }; setBall(!!mi.roll); $("k2-obs").textContent = ""; }
+  };
+})();
+scenes.k2 = [MAG];
+const glide = (t, t0, t1, a, b) => { let u = clamp((t - t0) / (t1 - t0), 0, 1); u = u * u * (3 - 2 * u); return { x: a[0] + (b[0] - a[0]) * u, y: a[1] + (b[1] - a[1]) * u }; };
+
+series("k2", [
+  { title: "Der Magnet kommt näher", text: "Die Eisenkugel liegt still. Der Magnet wird langsam in ihre Nähe geschoben und bleibt dann liegen.", pq: "Was passiert mit der Kugel?",
+    make: () => ({ ball: { x: 400, y: 170 }, mag: { x: 690, y: 440 }, magFn: t => glide(t, .4, 2, [690, 440], [545, 265]), dur: 7 }),
+    qs: [{ q: "Was ist mit der Kugel passiert?", a: "fast" }, { q: "Hat der Magnet die Kugel berührt, bevor sie losgerollt ist?", opts: YN, a: "n", ok: "Richtig. Die Kugel rollt los, obwohl nichts sie berührt." }],
+    expl: "Der Magnet übt eine Kraft auf die Kugel aus, ohne sie zu berühren. Wirkung: Die Kugel wird schneller." },
+  { title: "Die Kugel rollt am Magneten vorbei", text: "Die Kugel rollt geradeaus nach rechts. Der Magnet liegt neben ihrer Bahn.", pq: "Was passiert mit der Kugel?",
+    make: () => ({ ball: { x: 40, y: 170, vx: 135 }, mag: { x: 430, y: 335 }, dur: 4.2 }),
+    qs: [{ q: "Was ist mit der Kugel passiert?", a: "dir", ok: "Richtig. Die gepunktete Spur ist keine Gerade mehr." }],
+    expl: "Der Magnet zieht die Kugel zur Seite. Wirkung: Die Kugel ändert ihre Bewegungsrichtung." },
+  { title: "Der Magnet liegt hinter der Kugel", text: "Die Kugel rollt nach rechts, vom Magneten weg.", pq: "Was passiert mit der Kugel?",
+    make: () => ({ ball: { x: 290, y: 170, vx: 135 }, mag: { x: 110, y: 170 }, dur: 3.2 }),
+    qs: [{ q: "Was ist mit der Kugel passiert?", a: "slow", ok: "Richtig. Vergleiche die Tempo-Werte unter der Matte." }],
+    expl: "Der Magnet zieht die Kugel zurück, also gegen ihre Bewegungsrichtung. Wirkung: Die Kugel wird langsamer." },
+  { title: "Magnet und Stahlstreifen", text: "Unten links ist ein dünner Stahlstreifen eingespannt. Der Magnet wird neben seine Spitze geschoben.", pq: "Was passiert mit dem Stahlstreifen?",
+    make: () => ({ noBall: true, mag: { x: 690, y: 440 }, magFn: t => glide(t, .4, 2.4, [690, 440], [240, 300]), dur: 3.4 }),
+    qs: [{ q: "Was ist mit dem Stahlstreifen passiert?", a: "def" }, { q: "Hat der Magnet den Streifen berührt?", opts: YN, a: "n" }],
+    expl: "Der Magnet zieht die Spitze des Streifens an. Wirkung: Der Streifen wird verformt (verbogen)." },
+  { free: true, title: "Jetzt bist du dran", text: "Ziehe den Magneten mit dem Finger oder der Maus über die Matte. Die Kugel darfst du nicht anfassen. Mit den Knöpfen unter der Matte legst du die Kugel neu hin oder lässt sie losrollen.",
+    missions: [
+      { key: "dist", roll: false, t: "Abstand testen: Die Kugel liegt still. Schiebe den Magneten ganz langsam auf sie zu. Unter der Matte siehst du den Abstand. Bei welchem Abstand rollt die Kugel los?", ok: "Gemessen. Wiederhole es gern mit dem Knopf „Kugel hinlegen“.",
+        mc: { q: "Die Kugel reagiert erst, wenn der Magnet nah genug ist. Was folgt daraus?", a: "a", opts: [["a", "Je näher der Magnet, desto größer ist seine Kraft auf die Kugel."], ["b", "Die Kraft ist bei jedem Abstand gleich groß."], ["c", "Weit weg ist die Kraft am größten."]], ok: "Richtig. Auch Kräfte ohne Berührung können verschieden groß sein." } },
+      { key: "goal", roll: true, t: "Magnet-Lotse: Die Kugel rollt nach rechts. Lenke sie mit dem Magneten ins gelbe Zielfeld. Sie darf vorher nicht am Magneten hängen bleiben, und der Magnet darf nicht im Zielfeld liegen. Neuer Versuch: „Kugel losrollen lassen“.", ok: "Treffer: Du hast die Kugel ohne Berührung ins Ziel gelenkt." }],
+    fq: "Forscherfrage: Musste der Magnet Kugel oder Streifen berühren, damit sich etwas ändert?",
+    fopts: [["j", "Ja, immer"], ["n", "Nein, es ging auch ohne"]], fa: "n",
+    fok: "Richtig. Manche Kräfte wirken ohne Berührung, zum Beispiel die magnetische Kraft und die Gewichtskraft. Die Kraft selbst hast du nie gesehen, nur ihre Wirkung.", fno: "Sieh genau hin: Die Kugel reagiert schon, bevor der Magnet sie erreicht." }
+], MAG);
+
+/* ============================================================
+   KAPITEL 3
+   ============================================================ */
+let k3a = false, k3b = false, k3c = false;
+const k3check = () => { if (k3a && k3b && k3c) chapterDone("k3"); };
+const CASES = [
+  { t: "Ein Rennwagen startet an der Ampel.", w: "fast", b: "mit", e: "Die Reifen stoßen sich an der Straße ab. Der Wagen wird schneller." },
+  { t: "Eine Torhüterin fängt den Ball.", w: "slow", b: "mit", e: "Ihre Hände bremsen den Ball ab." },
+  { t: "Ein Apfel löst sich vom Ast und fällt.", w: "fast", b: "ohne", e: "Die Erde zieht den Apfel an, ohne ihn zu berühren. Diese Kraft heißt Gewichtskraft." },
+  { t: "Ein Schiff legt das Ruder um und fährt eine Kurve.", w: "dir", b: "mit", e: "Das Wasser drückt gegen das Ruder. Das Schiff ändert seine Richtung." },
+  { t: "Eine Büroklammer liegt neben einem Magneten und flitzt plötzlich zu ihm hin.", w: "fast", b: "ohne", e: "Die magnetische Kraft wirkt schon aus der Entfernung." },
+  { t: "Ein Springer steht vorn auf dem Sprungbrett. Das Brett biegt sich nach unten.", w: "def", b: "mit", e: "Der Springer drückt auf das Brett und verformt es." },
+  { t: "Du wirfst einen Ball senkrecht nach oben. Auf dem Weg nach oben wird er immer langsamer.", w: "slow", b: "ohne", e: "Die Gewichtskraft bremst den Ball, obwohl ihn nichts berührt." },
+  { t: "Ein Kran hebt einen Stahlträger. Das Kranseil wird dabei ein winziges Stück länger.", w: "def", b: "mit", e: "Der Träger zieht am Seil und dehnt es. Manche Verformungen sind so klein, dass man sie kaum sieht." }
+];
+seq($("k3-det"), CASES.length, "Fall", (i, body, ok) => {
+  const c = CASES[i]; body.innerHTML = '<p class="sit">' + c.t + "</p>";
+  const d1 = document.createElement("div"), d2 = document.createElement("div"); body.append(d1, d2); let n = 0;
+  const fin = () => { if (++n === 2){ const e = document.createElement("p"); e.className = "expl"; e.textContent = c.e; body.appendChild(e); ok(); } };
+  mc(d1, { q: "Woran erkennst du hier die Kraft? Der Körper …", opts: EFF.slice(0, 4), a: c.w, ok: " ", onOk: fin });
+  mc(d2, { q: "Wirkt die Kraft mit oder ohne Berührung?", opts: [["mit", "mit Berührung"], ["ohne", "ohne Berührung"]], a: c.b, ok: " ", onOk: fin });
+}, () => { k3a = true; k3check(); $("k3-c2").hidden = false; $("k3-c2").scrollIntoView({ block: "start" }); });
+const WORTE = [
+  ["Muskelkraft", "j", "Deine Muskeln können ziehen und drücken. Das ist eine echte Kraft."],
+  ["Kohlekraft", "n", "Gemeint ist die Energie, die in der Kohle steckt. Energie ist keine Kraft."],
+  ["Gewichtskraft", "j", "Die Erde zieht jeden Körper nach unten."],
+  ["Sehkraft", "n", "Gemeint ist die Fähigkeit, gut zu sehen. Dabei wird nichts beschleunigt oder verformt."],
+  ["Magnetkraft", "j", "Ein Magnet zieht Eisen an."],
+  ["Solarkraft", "n", "Gemeint ist die Energie, die von der Sonne kommt."],
+  ["Zugkraft", "j", "Ein Seil oder ein Zugfahrzeug zieht an einem Körper."],
+  ["Geisteskraft", "n", "Gemeint ist die Fähigkeit zu denken."]
+];
+seq($("k3-wort"), WORTE.length, "Wort", (i, body, ok) => {
+  const w = WORTE[i]; body.innerHTML = '<p class="sit">' + w[0] + "</p>"; const d = document.createElement("div"); body.appendChild(d);
+  mc(d, { q: "Ist das eine Kraft im Sinn der Physik?", opts: [["j", "Ja, eine echte Kraft"], ["n", "Nein, nur Alltagssprache"]], a: w[1], ok: w[2], no: "Überlege: Kann das etwas schneller, langsamer oder krumm machen?", onOk: ok });
+}, () => { k3b = true; k3check(); $("k3-c3").hidden = false; $("k3-c3").scrollIntoView({ block: "start" }); });
+(function(){
+  const WORDS = ["Bewegungsrichtung", "Geschwindigkeit", "Kilogramm", "Masse", "Newton", "sichtbar", "verformt", "Wirkung"];
+  const MERK = ["Auf einen Körper wirkt eine Kraft, wenn sich seine ", ["Geschwindigkeit"], " ändert (schneller oder langsamer), wenn sich seine ", ["Bewegungsrichtung"],
+    " ändert oder wenn er sich ", ["verformt"], ". Die Kraft selbst ist nicht ", ["sichtbar"], ". Man erkennt sie nur an ihrer ", ["Wirkung"], ". Die Kraft F wird in ", ["Newton"], " (N) angegeben."];
+  const host = $("k3-merk"); let n = 0;
+  MERK.forEach(part => {
+    if (typeof part === "string"){ host.appendChild(document.createTextNode(part)); return; }
+    const s = document.createElement("select"); s.id = "gap-" + (n++); s.dataset.sol = part[0]; s.setAttribute("aria-label", "Lücke " + n);
+    s.innerHTML = '<option value="">… wählen …</option>' + WORDS.map(w => "<option>" + w + "</option>").join(""); host.appendChild(s);
+  });
+  $("k3-check").addEventListener("click", () => {
+    let ok = 0; const all = host.querySelectorAll("select");
+    all.forEach(s => { const r = s.value === s.dataset.sol; s.classList.toggle("right", r); s.classList.toggle("wrong", !r); if (r) ok++; });
+    const fb = $("k3-fb");
+    if (ok === all.length){ fb.className = "fb ok"; fb.textContent = "Alles richtig."; $("k3-final").hidden = false; $("k3-final").scrollIntoView({ block: "start" }); k3c = true; k3check(); }
+    else { fb.className = "fb no"; fb.textContent = ok + " von " + all.length + " Lücken stimmen. Verbessere die rot markierten."; }
+  });
+})();
+
+/* ============================================================
+   Kästchenpapier
+   ============================================================ */
+const GW = 640, GH = 400, CELL = 40;
+function gridBase(g){
+  g.fillStyle = "#fff"; g.fillRect(0, 0, GW, GH); g.lineWidth = 1;
+  for (let x = 0; x <= GW; x += CELL / 2){ g.strokeStyle = (x % CELL === 0) ? "#b9cbe6" : "#e4ebf6"; g.beginPath(); g.moveTo(x + .5, 0); g.lineTo(x + .5, GH); g.stroke(); }
+  for (let y = 0; y <= GH; y += CELL / 2){ g.strokeStyle = (y % CELL === 0) ? "#b9cbe6" : "#e4ebf6"; g.beginPath(); g.moveTo(0, y + .5); g.lineTo(GW, y + .5); g.stroke(); }
+}
+function gridNote(g, txt){ g.fillStyle = "rgba(255,255,255,.92)"; g.fillRect(8, 8, 330, 30); g.strokeStyle = "#b9cbe6"; g.strokeRect(8.5, 8.5, 330, 30);
+  g.fillStyle = "#1d2a2a"; g.font = "600 15px Segoe UI, system-ui, sans-serif"; g.textAlign = "left"; g.textBaseline = "middle"; g.fillText(txt, 16, 24); g.textBaseline = "alphabetic"; }
+function gArrow(g, o, v, col, label, opt){ arrow(g, o[0] * CELL, o[1] * CELL, (o[0] + v[0]) * CELL, (o[1] + v[1]) * CELL, col, label, opt); }
+function gDot(g, o){ g.fillStyle = "#1d2a2a"; g.beginPath(); g.arc(o[0] * CELL, o[1] * CELL, 6, 0, 7); g.fill(); }
+function gridDrag(cv, origin, onMove){
+  let down = false;
+  const h = e => { const p = ppos(cv, e, GW, GH); onMove([Math.round(p.x / CELL * 2) / 2 - origin()[0], Math.round(p.y / CELL * 2) / 2 - origin()[1]]); };
+  cv.addEventListener("pointerdown", e => { down = true; cv.setPointerCapture(e.pointerId); h(e); e.preventDefault(); });
+  cv.addEventListener("pointermove", e => { if (down) h(e); });
+  ["pointerup", "pointercancel"].forEach(n => cv.addEventListener(n, () => { down = false; }));
+}
+
+/* ============================================================
+   KAPITEL 4
+   ============================================================ */
+let k4a = false, k4b = false, k4c = false;
+const k4check = () => { if (k4b && k4c){ $("k4-ab2").hidden = false; } if (k4a && k4b && k4c && k4ab){ chapterDone("k4"); } };
+let k4ab = false;
+const ARL = (function(){
+  const cv = $("k4-cv"), g = setup(cv, W, H), DIRS = [[1, 0], [0, 1], [-1, 0], [0, -1]];
+  let car, N = 4, d = 0, applying = 0, pts = [], tA = 0;
+  const reset = () => { car = { x: 400, y: 250, vx: 0, vy: 0, ang: 0, col: RED, crF: 0, crR: 0 }; pts = []; applying = 0; };
+  reset();
+  $("k4-n").addEventListener("input", e => { N = +e.target.value; $("k4-nv").textContent = N + " N"; });
+  $("k4-dir").querySelectorAll("button").forEach(b => b.addEventListener("click", () => { d = +b.dataset.d;
+    $("k4-dir").querySelectorAll("button").forEach(x => { x.classList.toggle("on", x === b); x.classList.toggle("ghost", x !== b); }); }));
+  $("k4-apply").addEventListener("click", () => { if (applying > 0) return; applying = 1; car.s0 = sp(car); });
+  $("k4-reset").addEventListener("click", () => { reset(); $("k4-obs").textContent = "Auto steht wieder in der Mitte."; });
+  function step(dt){
+    if (applying > 0){ const h = Math.min(dt, applying); car.vx += DIRS[d][0] * N * 26 * h; car.vy += DIRS[d][1] * N * 26 * h; applying -= h;
+      if (applying <= 0){ applying = 0; $("k4-obs").textContent = "Kraft " + N + " N für 1 Sekunde: Tempo vorher " + cms(car.s0) + " cm/s, jetzt " + cms(sp(car)) + " cm/s."; } }
+    car.x += car.vx * dt; car.y += car.vy * dt;
+    if (car.x < 12 + CR){ car.x = 12 + CR; car.vx = Math.abs(car.vx) * .9; } if (car.x > W - 12 - CR){ car.x = W - 12 - CR; car.vx = -Math.abs(car.vx) * .9; }
+    if (car.y < 12 + CR){ car.y = 12 + CR; car.vy = Math.abs(car.vy) * .9; } if (car.y > H - 12 - CR){ car.y = H - 12 - CR; car.vy = -Math.abs(car.vy) * .9; }
+    const s = sp(car); if (s > 12) car.ang += angDiff(Math.atan2(car.vy, car.vx), car.ang) * Math.min(1, 12 * dt);
+    tA += dt; if (tA > .06 && s > 8){ tA = 0; pts.push({ x: car.x, y: car.y }); if (pts.length > 110) pts.shift(); }
+  }
+  function draw(){
+    drawMat(g, "#1f5d4c", "#d9f2e6"); trail(g, pts); drawCar(g, car);
+    const L = N * 17, x1 = car.x + DIRS[d][0] * L, y1 = car.y + DIRS[d][1] * L;
+    arrow(g, car.x, car.y, x1, y1, "#f08a1c", "F = " + N + " N", { alpha: applying > 0 ? 1 : .8, dash: applying > 0 ? null : [9, 7], labelCol: "#b85f00", w: 6, tip: true });
+    g.fillStyle = "#1d2a2a"; g.strokeStyle = "#fff"; g.lineWidth = 2; g.beginPath(); g.arc(car.x, car.y, 5, 0, 7); g.fill(); g.stroke();
+    if (applying <= 0 && sp(car) < 5){
+      g.font = "600 14px Segoe UI, system-ui, sans-serif"; g.fillStyle = "#fff"; g.textAlign = "center";
+      g.fillText("Angriffspunkt", car.x, car.y + (d === 1 ? -30 : 42));
+      g.fillText("gestrichelt: geplante Kraft", 400, H - 30); g.textAlign = "left";
+    }
+    hud(g, [{ col: RED, v: sp(car) }]);
+  }
+  return { step, draw };
+})();
+scenes.k4 = [ARL];
+(function(){
+  const q = $("k4-q"), d1 = document.createElement("div"), d2 = document.createElement("div"), d3 = document.createElement("div"); q.append(d1);
+  mc(d1, { q: "Probiere 2 N und danach 8 N aus (Auto vorher zurückstellen). Was stimmt?", a: "b",
+    opts: [["a", "Das Tempo ist nach 1 Sekunde gleich."], ["b", "Bei 8 N ist das Auto danach viel schneller."], ["c", "Bei 2 N ist das Auto danach schneller."]],
+    ok: "Richtig. Ein längerer Pfeil bedeutet eine größere Kraft und damit eine stärkere Wirkung.", onOk: () => { q.append(d2);
+      mc(d2, { q: "Das Auto rollt nach rechts. Du lässt eine Kraft nach links wirken. Was passiert?", a: "b",
+        opts: [["a", "Es wird schneller."], ["b", "Es wird langsamer."], ["c", "Nichts."]], ok: "Richtig. Die Richtung des Pfeils entscheidet, ob die Kraft beschleunigt oder bremst.", onOk: () => { q.append(d3);
+          mc(d3, { q: "Das Auto rollt nach rechts. Die Kraft zeigt nach oben. Was passiert?", a: "c",
+            opts: [["a", "Es wird nur schneller."], ["b", "Es bleibt stehen."], ["c", "Es ändert seine Richtung."]], ok: "Richtig. Jetzt kennst du alle drei Angaben eines Kraftpfeils.", onOk: () => { k4a = true; k4check(); $("k4-ab1").hidden = false; } }); } }); } });
+})();
+(function(){
+  const cv = $("k4-g1"), g = setup(cv, GW, GH), O = [8, 5];
+  const IT = [{ v: [4, 0], k: 2 }, { v: [0, -3], k: 3 }, { v: [-2.5, 0], k: 4 }];
+  seq($("k4-read"), IT.length, "Aufgabe", (i, body, ok) => {
+    const it = IT[i], len = Math.hypot(it.v[0], it.v[1]);
+    gridBase(g); gArrow(g, O, it.v, "#e87a0c", "F"); gDot(g, O); gridNote(g, "Maßstab: 1 cm ≙ " + de(it.k) + " N  ·  1 Kästchen = 1 cm");
+    nq(body, { q: "Wie groß ist die Kraft F?", unit: "N", a: len * it.k, hint: "Zähle die Kästchen (= cm) und rechne: Länge in cm mal " + de(it.k) + " N.", ok: "Richtig: " + de(len) + " cm · " + de(it.k) + " N/cm = " + de(len * it.k) + " N.", onOk: ok });
+  }, () => { gridBase(g); k4b = true; k4check(); });
+})();
+(function(){
+  const cv = $("k4-g2"), g = setup(cv, GW, GH), O = [8, 5]; let user = null, cur = null, locked = true;
+  const IT = [{ t: "12 N nach rechts", k: 3, v: [4, 0], n: 12 }, { t: "5 N nach unten", k: 2, v: [0, 2.5], n: 5 }];
+  function draw(){ gridBase(g); if (user) gArrow(g, O, user, "#e87a0c", "F"); gDot(g, O); if (cur) gridNote(g, "Maßstab: 1 cm ≙ " + de(cur.k) + " N  ·  1 Kästchen = 1 cm"); }
+  gridDrag(cv, () => O, v => { if (locked) return; user = v; draw(); const l = $("k4-len"); if (l) l.textContent = "Länge deines Pfeils: " + de(Math.hypot(v[0], v[1])) + " cm"; });
+  seq($("k4-draw"), IT.length, "Aufgabe", (i, body, ok) => {
+    cur = IT[i]; user = null; locked = false; draw();
+    body.innerHTML = '<p class="qq">Zeichne eine Kraft von ' + cur.t + '.</p><p class="count" id="k4-len">Länge deines Pfeils: noch nicht gezeichnet</p><div class="controls"><button class="btn">Prüfen</button></div><p class="fb"></p>';
+    const fb = body.querySelector(".fb");
+    body.querySelector("button").addEventListener("click", () => {
+      if (!user || (user[0] === 0 && user[1] === 0)){ fb.className = "fb no"; fb.textContent = "Zeichne zuerst einen Pfeil auf das Kästchenpapier."; return; }
+      const lu = Math.hypot(user[0], user[1]), lt = Math.hypot(cur.v[0], cur.v[1]), sameDir = (user[0] * cur.v[0] + user[1] * cur.v[1]) / (lu * lt) > .999;
+      if (sameDir && Math.abs(lu - lt) < .01){ fb.className = "fb ok"; fb.textContent = "Richtig: " + de(cur.n) + " N : " + de(cur.k) + " N pro cm = " + de(lt) + " cm."; locked = true; ok(); }
+      else if (sameDir){ fb.className = "fb no"; fb.textContent = "Die Richtung stimmt. Rechne die Länge nach: " + de(cur.n) + " N geteilt durch " + de(cur.k) + " N pro cm."; }
+      else { fb.className = "fb no"; fb.textContent = "Achte auf die Richtung: Die Pfeilspitze zeigt, wohin die Kraft wirkt."; }
+    });
+  }, () => { user = null; cur = null; draw(); k4c = true; k4check(); });
+})();
+
+/* ============================================================
+   KAPITEL 5
+   ============================================================ */
+let k5a = false, k5b = false;
+let k5ab = false;
+const k5check = () => { if (k5a && k5b){ $("k5-know").hidden = false; $("k5-ab").hidden = false; } if (k5a && k5b && k5ab) chapterDone("k5"); };
+const LIN = (function(){
+  const LW = 640, LH = 200, cv = $("k5-cv"), g = setup(cv, LW, LH), PX = 16;
+  let it = null, x = 320, v = 0, play = 0, res = null;
+  function set(i){ it = i; x = 320; v = 0; play = 0; res = null; }
+  function go(r){ res = r; play = 1.6; v = 0; }
+  function step(dt){ if (play > 0){ play -= dt; v += res * 22 * dt; x = clamp(x + v * dt, 150, 490); } }
+  function draw(){
+    g.fillStyle = "#fff"; g.fillRect(0, 0, LW, LH); g.strokeStyle = "#8b8f95"; g.lineWidth = 3; g.beginPath(); g.moveTo(10, 150); g.lineTo(LW - 10, 150); g.stroke();
+    g.fillStyle = "#c9a36a"; g.strokeStyle = "#6b4a22"; g.lineWidth = 3; g.beginPath(); g.roundRect(x - 34, 92, 68, 58, 4); g.fill(); g.stroke();
+    g.beginPath(); g.moveTo(x - 34, 92); g.lineTo(x + 34, 150); g.moveTo(x + 34, 92); g.lineTo(x - 34, 150); g.lineWidth = 1.5; g.stroke();
+    if (!it) return;
+    it.r.forEach((n, i) => arrow(g, x + 34, 104 + i * 34, x + 34 + n * PX, 104 + i * 34, "#2f6fd0", n + " N"));
+    it.l.forEach((n, i) => arrow(g, x - 34, 104 + i * 34, x - 34 - n * PX, 104 + i * 34, "#1f8a4c", n + " N"));
+    if (res !== null){ if (res === 0){ g.fillStyle = "#b85f00"; g.font = "bold 17px Segoe UI, system-ui, sans-serif"; g.textAlign = "center"; g.fillText("F_Res = 0 N: Die Kiste bleibt in Ruhe.", 320, 40); }
+      else arrow(g, x, 62, x + res * PX, 62, "#e87a0c", "F_Res = " + Math.abs(res) + " N", { w: 6 }); }
+  }
+  return { step, draw, set, go };
+})();
+scenes.k5 = [LIN];
+(function(){
+  const IT = [{ r: [4, 3], l: [] }, { r: [3], l: [9] }, { r: [5, 2], l: [4] }];
+  seq($("k5-a"), IT.length, "Aufgabe", (i, body, ok) => {
+    const it = IT[i]; LIN.set(it);
+    const sum = it.r.reduce((a, b) => a + b, 0) - it.l.reduce((a, b) => a + b, 0), id = "in" + (++uid);
+    body.innerHTML = '<p class="qq">Wie groß ist die Resultierende und wohin zeigt sie?</p><div class="inl"><input type="text" inputmode="decimal" id="' + id + '" aria-label="Betrag in Newton" autocomplete="off"><span>N</span>' +
+      '<select id="' + id + 's" aria-label="Richtung"><option value="">Richtung wählen</option><option value="r">nach rechts</option><option value="l">nach links</option><option value="0">keine (Gleichgewicht)</option></select><button class="btn">Prüfen</button></div><p class="fb"></p>';
+    const fb = body.querySelector(".fb"), btn = body.querySelector("button");
+    btn.addEventListener("click", () => {
+      const v = parseNum($(id).value), d = $(id + "s").value, want = sum > 0 ? "r" : sum < 0 ? "l" : "0";
+      if (isNaN(v) || d === ""){ fb.className = "fb no"; fb.textContent = "Gib den Betrag ein und wähle die Richtung."; return; }
+      if (Math.abs(v - Math.abs(sum)) < .01 && d === want){ fb.className = "fb ok";
+        fb.textContent = sum === 0 ? "Richtig. Die Kräfte heben sich auf: Kräftegleichgewicht." : "Richtig. Sieh zu, wie die Kiste in Richtung der Resultierenden schneller wird.";
+        btn.disabled = true; LIN.go(sum); ok(); }
+      else { fb.className = "fb no"; fb.textContent = Math.abs(v - Math.abs(sum)) < .01 ? "Der Betrag stimmt. Überlege, welche Seite stärker zieht." : "Noch nicht. Addiere Kräfte mit gleicher Richtung und ziehe die Gegenkräfte ab."; }
+    });
+  }, () => { k5a = true; k5check(); });
+})();
+(function(){
+  const cv = $("k5-g"), g = setup(cv, GW, GH), O = [6, 7]; let cur = null, user = null, help = false, locked = true;
+  const IT = [{ a: [4, 0], b: [0, -3], k: 1 }, { a: [3, -1], b: [1, -3], k: 2 }];
+  function draw(){
+    gridBase(g); if (!cur){ return; }
+    if (help){ g.save(); g.strokeStyle = "#8b8f95"; g.lineWidth = 2; g.setLineDash([7, 6]);
+      [[cur.a, cur.b], [cur.b, cur.a]].forEach(([p, q]) => { g.beginPath(); g.moveTo((O[0] + p[0]) * CELL, (O[1] + p[1]) * CELL); g.lineTo((O[0] + p[0] + q[0]) * CELL, (O[1] + p[1] + q[1]) * CELL); g.stroke(); }); g.restore(); }
+    gArrow(g, O, cur.a, "#2f6fd0", "F₁"); gArrow(g, O, cur.b, "#1f8a4c", "F₂");
+    if (user) gArrow(g, O, user, "#e87a0c", "F_Res", { w: 6 });
+    gDot(g, O); gridNote(g, "Maßstab: 1 cm ≙ " + cur.k + " N  ·  1 Kästchen = 1 cm");
+  }
+  gridDrag(cv, () => O, v => { if (locked) return; user = v; draw(); });
+  seq($("k5-b"), IT.length, "Aufgabe", (i, body, ok) => {
+    cur = IT[i]; user = null; help = false; locked = false; draw();
+    const R = [cur.a[0] + cur.b[0], cur.a[1] + cur.b[1]], len = Math.round(Math.hypot(R[0], R[1]) * 10) / 10;
+    body.innerHTML = '<p class="qq">Zeichne F<sub>Res</sub>: Tippe oder ziehe auf dem Kästchenpapier.</p><div class="controls"><button class="btn ghost" data-h>Hilfslinien einblenden</button><button class="btn" data-c>Prüfen</button></div><p class="fb"></p><div data-n></div>';
+    const fb = body.querySelector(".fb");
+    body.querySelector("[data-h]").addEventListener("click", () => { help = true; draw(); fb.className = "fb"; fb.textContent = "Die gestrichelten Linien sind parallel zu F₁ und F₂. Die Spitze von F_Res liegt in ihrem Schnittpunkt."; });
+    body.querySelector("[data-c]").addEventListener("click", e => {
+      if (!user){ fb.className = "fb no"; fb.textContent = "Zeichne zuerst den Pfeil."; return; }
+      if (Math.abs(user[0] - R[0]) < .01 && Math.abs(user[1] - R[1]) < .01){ help = true; locked = true; draw(); e.target.disabled = true; fb.className = "fb ok"; fb.textContent = "Richtig gezeichnet. Die Resultierende ist die Diagonale des Parallelogramms.";
+        nq(body.querySelector("[data-n]"), { q: "Dein Pfeil ist " + de(len) + " cm lang. Wie groß ist F<sub>Res</sub>?", unit: "N", a: len * cur.k, tol: .35, hint: "Länge in cm mal " + cur.k + " N.", ok: "Richtig: etwa " + de(Math.round(len * cur.k * 10) / 10) + " N. Das ist weniger als F₁ + F₂, weil die Kräfte nicht in dieselbe Richtung zeigen.", onOk: ok }); }
+      else { fb.className = "fb no"; fb.textContent = "Noch nicht. Blende die Hilfslinien ein und setze die Pfeilspitze in ihren Schnittpunkt."; }
+    });
+  }, () => { cur = null; draw(); k5b = true; k5check(); });
+})();
+
+/* ============================================================
+   KAPITEL 6: Abschluss-Check
+   ============================================================ */
+(function(){
+  const Q = [
+    { q: "Woran erkennst du, dass auf einen Körper eine Kraft wirkt?", a: "b", o: [["a", "Man sieht die Kraft als Pfeil."], ["b", "An ihrer Wirkung auf den Körper."], ["c", "Der Körper wird schwerer."]], e: "Kräfte sind unsichtbar. Der Pfeil ist nur ein Modell." },
+    { q: "Was ist keine Wirkung einer Kraft?", a: "d", o: [["a", "Der Körper wird schneller."], ["b", "Der Körper wird verformt."], ["c", "Der Körper ändert seine Richtung."], ["d", "Der Körper ändert seine Farbe."]], e: "Kräfte ändern Bewegung oder Form." },
+    { q: "In welcher Einheit gibt man Kräfte an?", a: "c", o: [["a", "Kilogramm (kg)"], ["b", "Meter pro Sekunde (m/s)"], ["c", "Newton (N)"], ["d", "Joule (J)"]], e: "Kilogramm ist die Einheit der Masse." },
+    { q: "Welche dieser Kräfte wirkt ohne Berührung?", a: "c", o: [["a", "Die Kraft einer schiebenden Hand"], ["b", "Die Zugkraft eines Seils"], ["c", "Die Gewichtskraft"], ["d", "Die Kraft beim Stoß zweier Autos"]], e: "Die Erde zieht Körper an, ohne sie zu berühren. Auch Magnete wirken so." },
+    { q: "Ein rollender Fußball wird von der Seite getreten. Was bewirkt die Kraft vor allem?", a: "b", o: [["a", "Der Ball bleibt stehen."], ["b", "Der Ball ändert seine Bewegungsrichtung."], ["c", "Nichts."]], e: "Eine Kraft quer zur Bewegung lenkt den Körper um." },
+    { q: "Was sagt die Länge eines Kraftpfeils aus?", a: "a", o: [["a", "Den Betrag der Kraft"], ["b", "Die Richtung der Kraft"], ["c", "Den Angriffspunkt"], ["d", "Die Masse des Körpers"]], e: "Je länger der Pfeil, desto größer die Kraft." },
+    { q: "Maßstab 1 cm ≙ 5 N. Ein Kraftpfeil ist 4 cm lang. Wie groß ist die Kraft?", a: "c", o: [["a", "9 N"], ["b", "1,25 N"], ["c", "20 N"], ["d", "45 N"]], e: "4 cm · 5 N pro cm = 20 N." },
+    { q: "Maßstab 1 cm ≙ 3 N. Wie lang musst du den Pfeil für 9 N zeichnen?", a: "b", o: [["a", "27 cm"], ["b", "3 cm"], ["c", "6 cm"], ["d", "12 cm"]], e: "9 N : 3 N pro cm = 3 cm." }
+  ];
+  let score = 0;
+  seq($("k6-quiz"), Q.length, "Frage", (i, body, ok) => {
+    const q = Q[i]; mc(body, { q: q.q, opts: q.o, a: q.a, ok: "Richtig. " + q.e, no: "Das stimmt nicht. Überlege noch einmal.", onOk: first => { if (first) score++; ok(); } });
+  }, body => {
+    const t = score >= 7 ? "Du bist Kraft-Experte." : score >= 5 ? "Gut gemacht. Sieh dir die Kapitel zu deinen Fehlern noch einmal an." : "Arbeite die Kapitel noch einmal durch und versuche es erneut.";
+    body.innerHTML = '<p class="sit">' + score + " von " + Q.length + ' Fragen im ersten Versuch richtig.</p><p class="fb ok">' + t + "</p>"; chapterDone("k6");
+  });
+})();
+
+/* ============================================================
+   Schleife und Start
+   ============================================================ */
+let last = performance.now();
+function frame(now){
+  const dt = Math.min((now - last) / 1000, .05); last = now;
+  const sc = scenes[active]; if (sc) for (const s of sc){ s.step(dt); s.draw(); }
+  requestAnimationFrame(frame);
+}
+$("k3-abdone").addEventListener("change", e => { $("k3-go").disabled = !e.target.checked; });
+$("k3-go").addEventListener("click", () => go("k4"));
+$("k4-go").addEventListener("click", () => go("k5"));
+$("k5-abdone").addEventListener("change", e => { $("k5-stop").hidden = !e.target.checked; if (e.target.checked){ k5ab = true; k5check(); $("k5-stop").scrollIntoView({ block: "nearest" }); } });
+$("k5-go").addEventListener("click", () => go("k6"));
+$("k4-abdone").addEventListener("change", e => { k4ab = e.target.checked; $("k4-stop").hidden = !k4ab; if (k4ab){ k4check(); $("k4-stop").scrollIntoView({ block: "nearest" }); } });
+go((location.hash || "#k1").slice(1));
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
